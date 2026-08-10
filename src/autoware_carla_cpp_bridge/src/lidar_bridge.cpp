@@ -1,4 +1,5 @@
 #include "autoware_carla_cpp_bridge/lidar_bridge.hpp"
+#include <cmath>
 #include <memory>
 
 namespace autoware_carla_cpp_bridge
@@ -16,6 +17,14 @@ LidarBridge::LidarBridge(
   num_channels_(num_channels)
 {
   RCLCPP_INFO(this->get_logger(), "LidarBridge Node '%s' started.", node_name.c_str());
+
+  // Fault injection: gaussian noise along each ray (meters), 0.0 = off.
+  // Set at runtime: ros2 param set /<node> noise_sigma 0.1
+  // Optional sector gate: noise only within +-width/2 around the center
+  // azimuth (deg, sensor frame, x forward / y left). width 360 = everywhere.
+  this->declare_parameter<double>("noise_sigma", 0.0);
+  this->declare_parameter<double>("noise_yaw_center", 0.0);
+  this->declare_parameter<double>("noise_yaw_width", 360.0);
 
   // Publisher
   rclcpp::QoS qos(rclcpp::KeepLast(5));
@@ -123,6 +132,11 @@ void LidarBridge::lidarCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
 
   PointXYZIRC* points = reinterpret_cast<PointXYZIRC*>(modified_msg.data.data());
 
+  const float sigma = static_cast<float>(this->get_parameter("noise_sigma").as_double());
+  const float yaw_c = static_cast<float>(this->get_parameter("noise_yaw_center").as_double());
+  const float yaw_w = static_cast<float>(this->get_parameter("noise_yaw_width").as_double());
+  std::normal_distribution<float> noise_dist(0.0f, sigma > 0.0f ? sigma : 1.0f);
+
   for (size_t i = 0; i < valid_point_count; ++i) {
       const uint8_t* src = &msg->data[i * msg->point_step];
 
@@ -130,6 +144,26 @@ void LidarBridge::lidarCallback(const sensor_msgs::msg::PointCloud2::SharedPtr m
       float y = *reinterpret_cast<const float*>(src + 4);
       float z = *reinterpret_cast<const float*>(src + 8);
       float intensity_f = *reinterpret_cast<const float*>(src + 12);
+
+      if (sigma > 0.0f) {
+        bool in_sector = yaw_w >= 360.0f;
+        if (!in_sector) {
+          float az = std::atan2(y, x) * 57.29578f;
+          float d = std::fabs(az - yaw_c);
+          if (d > 180.0f) d = 360.0f - d;
+          in_sector = d <= yaw_w * 0.5f;
+        }
+        if (in_sector) {
+          // radial distance noise, equivalent to CARLA's lidar noise_stddev
+          const float r = std::sqrt(x * x + y * y + z * z);
+          if (r > 0.01f) {
+            const float scale = 1.0f + noise_dist(rng_) / r;
+            x *= scale;
+            y *= scale;
+            z *= scale;
+          }
+        }
+      }
 
       uint8_t intensity = static_cast<uint8_t>(std::clamp(intensity_f * 255.0f, 0.0f, 255.0f));
 

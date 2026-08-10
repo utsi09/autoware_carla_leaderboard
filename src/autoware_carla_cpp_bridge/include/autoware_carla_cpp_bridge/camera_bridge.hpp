@@ -1,6 +1,8 @@
 #ifndef CAMERA_BRIDGE_HPP_
 #define CAMERA_BRIDGE_HPP_
 
+#include <random>
+
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -35,6 +37,7 @@ private:
   std::string frame_id_;
   rclcpp::Time aw_time_;
   sensor_msgs::msg::CameraInfo camera_info_;
+  std::mt19937 rng_{std::random_device{}()};
 };
 
 }  // namespace autoware_carla_cpp_bridge

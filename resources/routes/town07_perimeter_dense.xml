@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<routes>
+    <route id="0" town="Town07" route_timeout="3600">
+        <weathers>
+            <weather route_percentage="100" cloudiness="5.0" precipitation="0.0" precipitation_deposits="0.0" wetness="0.0" wind_intensity="-10.0000" sun_azimuth_angle="-1.0" sun_altitude_angle="45.0" fog_density="-0.0000" />
+        </weathers>
+        <waypoints>
+            <position x="-193.4369" y="-245.8341" z="0.40" />
+            <position x="-194.4993" y="-230.4038" z="0.40" />
+            <position x="-195.5618" y="-214.9735" z="0.40" />
+            <position x="-196.6243" y="-199.5433" z="0.40" />
+            <position x="-197.6867" y="-184.1130" z="0.40" />
+            <position x="-198.7491" y="-168.6827" z="0.40" />
+            <position x="-199.8116" y="-153.2524" z="0.40" />
+            <position x="-199.9448" y="-136.8589" z="0.40" />
+            <position x="-200.0779" y="-120.4655" z="0.40" />
+            <position x="-200.2111" y="-104.0720" z="0.40" />
+            <position x="-200.3442" y="-87.6786" z="0.40" />
+            <position x="-200.4774" y="-71.2851" z="0.40" />
+            <position x="-200.6106" y="-54.8916" z="0.40" />
+            <position x="-200.7437" y="-38.4982" z="0.40" />
+            <position x="-200.8769" y="-22.1047" z="0.40" />
+            <position x="-200.0964" y="-3.2229" z="0.40" />
+            <position x="-199.3158" y="15.6590" z="0.40" />
+            <position x="-198.5353" y="34.5408" z="0.40" />
+            <position x="-198.6088" y="52.5415" z="0.40" />
+            <position x="-198.6822" y="70.5422" z="0.40" />
+            <position x="-198.7557" y="88.5430" z="0.40" />
+            <position x="-198.8291" y="106.5437" z="0.40" />
+            <position x="-180.8658" y="108.6596" z="0.40" />
+            <position x="-162.9025" y="110.7755" z="0.40" />
+            <position x="-144.9391" y="112.8914" z="0.40" />
+            <position x="-126.9758" y="115.0073" z="0.40" />
+            <position x="-109.3888" y="116.8513" z="0.40" />
+            <position x="-91.8018" y="118.6953" z="0.40" />
+            <position x="-74.2148" y="120.5393" z="0.40" />
+            <position x="-56.6278" y="122.3833" z="0.40" />
+            <position x="-41.4620" y="120.7615" z="0.40" />
+            <position x="-26.2962" y="119.1397" z="0.40" />
+            <position x="-11.1303" y="117.5180" z="0.40" />
+            <position x="4.0355" y="115.8962" z="0.40" />
+            <position x="19.2013" y="114.2744" z="0.40" />
+            <position x="34.3671" y="112.6526" z="0.40" />
+            <position x="44.8064" y="97.7503" z="0.41" />
+            <position x="55.2456" y="82.8479" z="0.42" />
+            <position x="65.6848" y="67.9456" z="0.42" />
+            <position x="76.1241" y="53.0433" z="0.43" />
+            <position x="76.1016" y="37.5310" z="0.58" />
+            <position x="76.0790" y="22.0187" z="0.73" />
+            <position x="76.0565" y="6.5064" z="0.89" />
+            <position x="76.0339" y="-9.0059" z="1.04" />
+            <position x="76.0114" y="-24.5182" z="1.19" />
+            <position x="74.2299" y="-41.1239" z="2.60" />
+            <position x="72.4485" y="-57.7295" z="4.01" />
+            <position x="70.6670" y="-74.3351" z="5.43" />
+            <position x="68.8855" y="-90.9408" z="6.84" />
+            <position x="67.1041" y="-107.5465" z="8.25" />
+            <position x="65.3226" y="-124.1521" z="9.66" />
+            <position x="60.6360" y="-140.2965" z="8.53" />
+            <position x="55.9494" y="-156.4410" z="7.39" />
+            <position x="51.2629" y="-172.5854" z="6.26" />
+            <position x="46.5763" y="-188.7298" z="5.13" />
+            <position x="41.8897" y="-204.8743" z="3.99" />
+            <position x="37.2031" y="-221.0187" z="2.86" />
+        </waypoints>
+        <scenarios>
+            <scenario name="BA_start" type="BackgroundActivityParametrizer">
+                <trigger_point x="-193.4369" y="-245.8341" z="0.40" yaw="94.0000" />
+                <num_front_vehicles value="1" />
+                <num_back_vehicles value="1" />
+            </scenario>
+        </scenarios>
+    </route>
+</routes>

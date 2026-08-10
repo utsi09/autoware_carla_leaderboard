@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+    <route id="0" town="Town07">
+        <weathers>
+            <weather route_percentage="100"
+                     cloudiness="5.0" precipitation="0.0" precipitation_deposits="0.0"
+                     wetness="0.0" wind_intensity="10.0" sun_azimuth_angle="-1.0"
+                     sun_altitude_angle="45.0" fog_density="0.0"/>
+        </weathers>
+
+        <waypoints>
+            <position x="-5.18"  y="-36.11" z="0.30"/>
+            <position x="-5.70"  y="26.89"  z="0.30"/>
+            <position x="-35.05" y="60.37"  z="0.40"/>
+            <position x="-73.68" y="54.66"  z="0.40"/>
+        </waypoints>
+
+        <scenarios>
+            <scenario type="ParkingCrossingPedestrian" name="Pedestrian_1">
+                <trigger_point x="-5.3" y="-15.0" z="0.30" yaw="90.0"/>
+                <distance value="20"/>
+            </scenario>
+
+            <scenario type="DynamicObjectCrossing" name="DynamicObj_1">
+                <trigger_point x="-5.5" y="15.0" z="0.30" yaw="90.0"/>
+                <distance value="15"/>
+            </scenario>
+
+            <scenario type="VehicleTurningRoute" name="VehicleTurn_1">
+                <trigger_point x="-20.0" y="58.0" z="0.40" yaw="-179.0"/>
+            </scenario>
+
+            <scenario type="InvadingTurn" name="InvadingTurn_1">
+                <trigger_point x="-50.0" y="56.0" z="0.40" yaw="-179.0"/>
+                <distance value="20"/>
+                <offset value="1.5"/>
+            </scenario>
+
+            <scenario type="ParkingCrossingPedestrian" name="Pedestrian_2">
+                <trigger_point x="-68.0" y="54.5" z="0.40" yaw="-179.0"/>
+                <distance value="15"/>
+            </scenario>
+
+            <scenario type="DynamicObjectCrossing" name="DynamicObj_2">
+                <trigger_point x="-72.0" y="54.5" z="0.40" yaw="-179.0"/>
+                <distance value="10"/>
+            </scenario>
+        </scenarios>
+    </route>
+</routes>

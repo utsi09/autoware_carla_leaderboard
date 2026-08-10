@@ -529,8 +529,20 @@ class AutowareConverter:
     
     def convert_control(self, aw_control_msg):
         carla_steering_angle = self._control_converter.convertLatAwToCarla(np.rad2deg(aw_control_msg.lateral.steering_tire_angle))
+        # 후진 지원: Autoware는 후진 구간에서 목표 속도를 음수로 주지만,
+        # 가속도는 "항상 진행방향 기준"이다 (+ = 증속, - = 제동; pid_longitudinal_
+        # controller applyVelocityFeedback의 NOTE 참조). 그래서 가속도는 부호
+        # 그대로 쓰고, 진행방향 현재속도만 미러링한다.
+        # (기존 acc_cmd = -lon.acceleration 미러링이 후진 가속(+0.5)을 브레이크로
+        # 뒤집어 주차 후진이 영구 정지하던 원인 — 8/10 게이트 프로브 실측)
+        lon = aw_control_msg.longitudinal
+        is_reverse = lon.velocity < -0.01
+        acc_cmd = lon.acceleration
+        cur_speed = self._get_twist()["position"]["x"]
+        if is_reverse:
+            cur_speed = -cur_speed
         carla_throttle, carla_brake = self._control_converter.updateThrottleBrake(
-            aw_control_msg.longitudinal.acceleration, self._last_acc, self._get_twist()["position"]["x"]
+            acc_cmd, self._last_acc, cur_speed
         )
         #carla_throttle, carla_brake = self._control_converter.mapThrottleBrake(
         #    self._get_acceleration()['position']['x'], aw_control_msg.longitudinal.acceleration, self._get_twist()["position"]["x"]
@@ -541,7 +553,7 @@ class AutowareConverter:
             throttle=carla_throttle,
             brake=carla_brake,
             hand_brake=False,
-            reverse=False,
+            reverse=is_reverse,
             manual_gear_shift=False,
             gear=0
         )

@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<routes>
+    <route id="0" town="Town07" route_timeout="3600">
+        <weathers>
+            <weather route_percentage="100" cloudiness="5.0" precipitation="0.0" precipitation_deposits="0.0" wetness="0.0" wind_intensity="-10.0000" sun_azimuth_angle="-1.0" sun_altitude_angle="45.0" fog_density="-0.0000" />
+        </weathers>
+        <waypoints>
+            <position x="-198.5995" y="-234.8447" z="0.0000" />
+            <position x="-199.8825" y="-229.0125" z="0.0000" />
+            <position x="-199.8877" y="-169.2662" z="0.0000" />
+            <position x="-191.1386" y="-161.2415" z="0.1400" />
+            <position x="-132.2686" y="-160.6669" z="0.1400" />
+            <position x="-83.2745" y="-160.1887" z="0.1400" />
+            <position x="-74.6543" y="-148.1861" z="0.2234" />
+            <position x="-80.0003" y="-130.6597" z="0.1582" />
+            <position x="-86.0366" y="-116.6443" z="0.1039" />
+            <position x="-95.5678" y="-101.8211" z="0.0411" />
+            <position x="-100.5818" y="-88.1603" z="0.0000" />
+            <position x="-100.6544" y="-69.3447" z="0.0000" />
+            <position x="-93.7093" y="-63.6097" z="0.0000" />
+            <position x="-15.8694" y="-64.3336" z="0.0000" />
+            <position x="-3.4290" y="-57.1824" z="0.0000" />
+            <position x="-3.6362" y="-11.1777" z="0.0000" />
+            <position x="3.5120" y="-1.6265" z="0.0268" />
+            <position x="38.9270" y="-1.7730" z="0.0268" />
+            <position x="74.5696" y="4.8386" z="0.0268" />
+            <position x="84.0299" y="35.0796" z="0.0268" />
+            <position x="73.9711" y="55.1306" z="0.0268" />
+            <position x="71.1854" y="79.0851" z="0.0000" />
+        </waypoints>
+        <scenarios>
+            <scenario name="BA_start" type="BackgroundActivityParametrizer">
+                <trigger_point x="-198.5995" y="-234.8447" z="0.0000" yaw="94.0000" />
+                <num_front_vehicles value="1" />
+                <num_back_vehicles value="1" />
+            </scenario>
+        </scenarios>
+    </route>
+</routes>

@@ -25,16 +25,16 @@ evaluation:
     # Seed used by the TrafficManager (default: 0)
     traffic-manager-seed: 0
     # Run with debug output (default: 0)
-    debug: 1
+    debug: 0
     # Use CARLA recording feature to create a recording of the scenario
     record: ""
     # Set the CARLA client timeout value in seconds (default: 300.0)
-    timeout: 300.0
+    timeout: 1200.0
     # Run with visualization (default: 0)
     tmp_visu: 0
   simulation_setup:
     # Name of the routes file to be executed
-    routes: resources/routes/town01_parking_pedestrian_crossing_short.xml
+    routes: resources/routes/town07_center.xml
     # Execute a specific set of routes (default: "")
     routes-subset: ""
     # Number of repetitions per route (default: 1)

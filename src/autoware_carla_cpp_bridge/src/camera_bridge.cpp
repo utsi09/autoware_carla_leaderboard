@@ -1,4 +1,5 @@
 #include "autoware_carla_cpp_bridge/camera_bridge.hpp"
+#include <algorithm>
 #include <memory>
 #include <cmath>
 
@@ -18,6 +19,10 @@ namespace autoware_carla_cpp_bridge
   frame_id_(frame_id)
 {
   RCLCPP_INFO(this->get_logger(), "CameraBridge Node '%s' started.", node_name.c_str());
+
+  // Fault injection: gaussian pixel noise (0-255 scale), 0.0 = off.
+  // Set at runtime: ros2 param set /<node> noise_sigma 15.0
+  this->declare_parameter<double>("noise_sigma", 0.0);
 
   // Initialize Camera Info
   camera_info_.header.frame_id = frame_id_;
@@ -78,6 +83,21 @@ void CameraBridge::imageCallback(const sensor_msgs::msg::Image::SharedPtr msg)
   auto modified_msg = *msg;
   modified_msg.header.frame_id = frame_id_;
   modified_msg.header.stamp = aw_time_;
+
+  const double sigma = this->get_parameter("noise_sigma").as_double();
+  if (sigma > 0.0 && modified_msg.width > 0) {
+    std::normal_distribution<float> dist(0.0f, static_cast<float>(sigma));
+    const size_t pixel_stride = modified_msg.step / modified_msg.width;  // 4 for bgra8
+    const size_t color_bytes = std::min<size_t>(pixel_stride, 3);        // skip alpha
+    auto & data = modified_msg.data;
+    for (size_t i = 0; i + pixel_stride <= data.size(); i += pixel_stride) {
+      for (size_t c = 0; c < color_bytes; ++c) {
+        const float v = static_cast<float>(data[i + c]) + dist(rng_);
+        data[i + c] = static_cast<uint8_t>(std::clamp(v, 0.0f, 255.0f));
+      }
+    }
+  }
+
   image_pub_->publish(modified_msg);
 
   camera_info_.header.stamp = aw_time_;

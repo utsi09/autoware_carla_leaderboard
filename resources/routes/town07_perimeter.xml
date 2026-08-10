@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+    <route id="0" town="Town07" route_timeout="3600">
+        <weathers>
+            <weather route_percentage="100" cloudiness="5.0" precipitation="0.0"
+                     precipitation_deposits="0.0" wetness="0.0" wind_intensity="10.0"
+                     sun_azimuth_angle="-1.0" sun_altitude_angle="45.0" fog_density="0.0"/>
+        </weathers>
+        <waypoints>
+            <position x="-193.4369" y="245.8341" z="0.40"/>
+            <position x="-199.8116" y="153.2524" z="0.40"/>
+            <position x="-200.8769" y="22.1047"  z="0.40"/>
+            <position x="-198.5353" y="-34.5408" z="0.40"/>
+            <position x="-198.8291" y="-106.5437" z="0.40"/>
+            <position x="-126.9758" y="-115.0073" z="0.40"/>
+            <position x="-56.6278"  y="-122.3833" z="0.40"/>
+            <position x="34.3671"   y="-112.6526" z="0.40"/>
+            <position x="76.1241"   y="-53.0433"  z="0.43"/>
+            <position x="76.0114"   y="24.5182"   z="1.19"/>
+            <position x="65.3226"   y="124.1521"  z="9.66"/>
+            <position x="37.2031"   y="221.0187"  z="2.86"/>
+        </waypoints>
+        <scenarios>
+            <scenario name="BA_start" type="BackgroundActivityParametrizer">
+                <trigger_point x="-198.8291" y="-106.5437" z="0.40" yaw="266"/>
+                <num_front_vehicles value="1"/>
+                <num_back_vehicles value="1"/>
+            </scenario>
+        </scenarios>
+    </route>
+</routes>

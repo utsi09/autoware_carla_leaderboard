@@ -34,6 +34,9 @@ AWCarlaCPPBridge::AWCarlaCPPBridge(const rclcpp::NodeOptions & options)
     std::bind(&AWCarlaCPPBridge::syncTimerCallback, this)
   );
 
+  // gb(GNSS blackout) fault: the agent flips this at runtime via the
+  // parameter service — same pattern as the lidar noise_sigma params
+  this->declare_parameter<bool>("gnss_mute", false);
   gnss_pose_pub_= 
   this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensing/gnss/pose_with_covariance", 10);
   imu_pub_= 
@@ -188,7 +191,8 @@ void AWCarlaCPPBridge::syncTimerCallback()
   aw_time_pub_->publish(clock_msg);
 
   // Publish last messages with updated timestamps
-  updateAndPublishWithHeader<geometry_msgs::msg::PoseWithCovarianceStamped>(last_gnss_pose_, gnss_pose_pub_);
+  if (!this->get_parameter("gnss_mute").as_bool())
+    updateAndPublishWithHeader<geometry_msgs::msg::PoseWithCovarianceStamped>(last_gnss_pose_, gnss_pose_pub_);
   updateAndPublishWithHeader<sensor_msgs::msg::Imu>(last_imu_data_, imu_pub_);
   updateAndPublishWithStamp<autoware_vehicle_msgs::msg::ControlModeReport>(last_control_mode_, control_mode_pub_);
   updateAndPublishWithStamp<autoware_vehicle_msgs::msg::SteeringReport>(last_steering_status_, steering_status_pub_);

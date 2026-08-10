@@ -1,6 +1,8 @@
 #ifndef LIDAR_BRIDGE_HPP_
 #define LIDAR_BRIDGE_HPP_
 
+#include <random>
+
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
@@ -43,6 +45,7 @@ private:
   bool sync_state_ = true;
   sensor_msgs::msg::PointCloud2 last_lidar_msg_;
   bool last_lidar_msg_received = false;
+  std::mt19937 rng_{std::random_device{}()};
 
 };
 

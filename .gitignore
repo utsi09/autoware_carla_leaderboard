@@ -169,3 +169,5 @@ ALL_ROUTES_TO_RUN*.txt
 
 # Maps folder
 resources/maps/
+__pycache__/
+src/external/
