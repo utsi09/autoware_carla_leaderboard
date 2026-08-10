@@ -105,11 +105,10 @@ NO_SEVERITY = {"cf", "lf", "nf", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"}  # 
 # the same shoulder. Per-case t is drawn deterministically from the cell key
 # (reproducible; ours/baseline share it like TM_SEED) and recorded in the CSV.
 TRIGGER_RANGE = (10, 45)   # goal_planner owns the last ~25 s of the ~85 s drive
-NPC_STYLES = ["def", "agg"]
-# 트래픽 밀도 스타일 (매트릭스 밖, --npc 로 명시 선택): none=배경차 0대,
-# low=4대 상한, high=기본+8대 추가. 밀도 차원을 전체 배터리에 넣으려면
-# NPC_STYLES 에 승격 (케이스 수 배수 증가 주의)
-EXTRA_NPC_STYLES = ["none", "low", "high"]
+# v3: 트래픽 밀도를 매트릭스 차원으로 승격 — 무교통/기본/공격적 3수준
+NPC_STYLES = ["none", "def", "agg"]
+# 매트릭스 밖 보조 스타일 (--npc 로 명시 선택): low=4대 상한, high=기본+8대
+EXTRA_NPC_STYLES = ["low", "high"]
 METHODS = ["ours", "baseline"]      # baseline = stock Autoware MRM (in-lane stop)
 REPEATS = 15
 
