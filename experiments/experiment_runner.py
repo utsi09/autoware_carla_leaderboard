@@ -68,8 +68,11 @@ JUNCTION_STUCK_S = 100.0
 # three full cycles before calling it stuck
 MRM_MOVE_STUCK_S = 150.0
 # 주차장 타깃은 정차 5s+scenario 전환+costmap+A*(30s+)+freespace 기동으로
-# 정지 구간이 길다 — 150 s로 자르면 기동 중 케이스를 사살한다
-MRM_MOVE_STUCK_PARKING_S = 240.0
+# 정지 구간이 길다 — 150 s로 자르면 기동 중 케이스를 사살한다.
+# v3.6b: supervisor stall 재시도 체인(180s×3)까지 수용하도록 560 s.
+# 타이머 위계: supervisor 재시도(~540) < judge 560 < leaderboard blocked 600
+# < CASE_TIMEOUT 900 (8/11 실측: 321s 걸려 성공하는 트래픽 케이스 존재)
+MRM_MOVE_STUCK_PARKING_S = 560.0
 # --mrm-off (FTTI 도출 모드): 고장 후 이 시간 동안 무사고면 SURVIVED,
 # 고장 이후 시작된 정지가 이 시간 이상 지속되면 HAZARD_STOPPED
 HAZARD_SURVIVE_S = 360.0
