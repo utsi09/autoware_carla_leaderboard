@@ -827,7 +827,9 @@ def archive_case_logs(idx, case, dry):
     # (cfl ablation에서 fixed 런 로그가 dynamic 런에 덮인 사고, 0803)
     run_tag = datetime.now().strftime("%m%d_%H%M")[:9]
     dst = OUT_DIR / "case_logs" / f"{run_tag}_{idx}_{case['method']}_{case['fault']}"
-    for name in ("cdr", "supervisor"):
+    # autoware.log 포함: 행동계획기 동결(빈 궤적) 부검에 필요 (8/11 1003003 실측 —
+    # 다음 케이스가 로그를 잘라 사인 유실)
+    for name in ("cdr", "supervisor", "autoware"):
         src = OUT_DIR / f"{name}.log"
         try:
             if not src.exists():

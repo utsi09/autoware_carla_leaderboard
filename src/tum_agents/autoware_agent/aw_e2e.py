@@ -513,7 +513,18 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                                        ego.get_location()) < 60.0)
                     except Exception:
                         tail_ok = False
-                if not tail_ok:
+                # [주차 실험] def(비공격) 후행차는 주차장 부근(35 m)에서 리스폰
+                # 금지 — 후진주차 코앞 리스폰이 기동을 영구 봉쇄(8/11 실측).
+                # agg 는 그대로: 공격 교통이 공간을 안 내주는 조건 자체가 실험
+                # 변인이고, 그 경우 supervisor 가 노측으로 폴백한다.
+                _aggressive = os.environ.get("npc", "") == "agg"
+                _park_anchors = ((-22.6, -8.2), (-17.0, -14.0),
+                                 (-51.8, -69.2), (-148.0, -98.2),
+                                 (-147.5, -91.9), (-140.0, -110.0))
+                _el = ego.get_location()
+                _near_lot = any(math.hypot(_el.x - ax, _el.y - ay) < 35.0
+                                for ax, ay in _park_anchors)
+                if not tail_ok and not (_near_lot and not _aggressive):
                     if self._tail_actor is not None:
                         try:
                             self._tail_actor.destroy()
@@ -537,9 +548,11 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                             # 0.5 m glued to the bumper at every stop and the
                             # ego could never resume -> permanent pin. 1.5 m
                             # still threatens but allows restart.
-                            tm.distance_to_leading_vehicle(npc, 1.5 if aggressive else 2.5)
+                            # def 는 여유롭게 따라오는 교통(7 m, 제한속도 -15%):
+                            # 후진주차에 공간을 내준다. agg 만 밀착 유지.
+                            tm.distance_to_leading_vehicle(npc, 1.5 if aggressive else 7.0)
                             tm.vehicle_percentage_speed_difference(
-                                npc, -30.0 if aggressive else -10.0)
+                                npc, -30.0 if aggressive else 15.0)
                             tm.ignore_lights_percentage(npc, 30.0 if aggressive else 0.0)
                             self._tail_actor = npc
                             print(f"[TAIL NPC] (re)spawned {gap:.0f}m behind ego"
