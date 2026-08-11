@@ -264,8 +264,14 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         # V2X sens gt traffic light states
         # Either the camera image or the v2x need to be set true
         # For visualisation you can also set both to true 
-        self._use_v2x_traffic_light = False
+        # 신호등 소스 선택: 카메라 계열 fault(cf/cn/cfl/cfl2/mix) 케이스는
+        # 고장이 신호 인식에도 미치는 게 실험 취지이므로 카메라 인식 유지.
+        # 그 외(gn/ln/imn/nf 등) 케이스는 신호등이 실험 변인이 아니므로 V2X로
+        # 받아 "초록불 인식 미스 → 교차로 프리징" 무관 노이즈를 제거 (8/11).
+        _cam_fault = any(os.environ.get(k) for k in ("cf", "cn", "cfl", "cfl2", "mix"))
+        self._use_v2x_traffic_light = not _cam_fault
         self._publish_cam_image = True
+        print(f"[TL SOURCE] {'camera (camera-fault case)' if _cam_fault else 'V2X ground truth'}")
         self._traffic_light_ids = set()  
 
         self._steps_before_init = 0
