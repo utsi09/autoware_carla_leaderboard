@@ -16,6 +16,7 @@ Usage:
 import argparse
 import csv
 import itertools
+import json
 import math
 import os
 import signal
@@ -385,6 +386,25 @@ def autoware_ready(dry, timeout=AUTOWARE_READY_TIMEOUT):
     return False
 
 
+POST_MRC_OBS_S = 110.0   # 정차 후 관측창(판정 전 10 s 유량 관측과 합쳐 ~120 s)
+
+
+def post_mrc_observe(window_s):
+    """정차 후 NPC 상충 대리 지표(급감속·근접통과·min TTC) 계측 — carla 클라이언트."""
+    try:
+        r = subprocess.run(
+            ["bash", "-lc",
+             "cd /home/taewook/autoware_carla_leaderboard && "
+             "source carla_envs.sh >/dev/null 2>&1; "
+             f"python3 experiments/post_mrc_observe.py {window_s:.0f}"],
+            capture_output=True, text=True, timeout=window_s + 30.0)
+        line = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else "{}"
+        return json.loads(line)
+    except Exception as e:
+        print(f"[judge] post-MRC observe failed: {e}")
+        return {}
+
+
 def capture_stall_factor():
     """STUCK/DEFER 원인 추적: 확정 직전 velocity factor의 behavior를 1회 캡처."""
     try:
@@ -438,6 +458,8 @@ class Judge:
         self._obs_samples = []
         self.traffic = ""              # cleared / blocked after the stop
         self.stall_factor = ""         # STUCK/DEFER 시점의 정지 요인 (v2)
+        self.npc_style = ""            # 관측창 게이트용 (none 은 상충 정의상 0)
+        self.obs = {}                  # post-MRC 관측창 대리 지표 (v4)
 
         self.node.create_subscription(
             String, "/mrm_supervisor/state", self._state_cb,
@@ -595,6 +617,14 @@ class Judge:
                         gend = sum(smp[-3:]) / len(smp[-3:])
                         self.traffic = ("blocked" if gend < 12.0 and gend - gmin < 3.0
                                         else "cleared")
+                    # [v4 관측창] 정차 후 NPC 상충 대리 지표 — 트래픽이 있는
+                    # 케이스만(none 은 정의상 0). AgentBlocked 600 s 이내라
+                    # 시나리오는 계속 살아 있다.
+                    if not lb_dead and self.npc_style in ("def", "agg", "low", "high"):
+                        win = min(POST_MRC_OBS_S, max(0.0, CASE_TIMEOUT_S - 20.0 - elapsed))
+                        if win > 20.0:
+                            print(f"[judge] post-MRC observation {win:.0f} s")
+                            self.obs = post_mrc_observe(win)
                     return verdict, self._detail()
                 time.sleep(1.0)
                 continue
@@ -714,7 +744,13 @@ class Judge:
                 "min_gap_m": round(self.min_gap, 1) if self.min_gap is not None else "",
                 "traffic": self.traffic,
                 "stall_factor": self.stall_factor,
-                "aw_mrm": "+".join(self.aw_behaviors)}
+                "aw_mrm": "+".join(self.aw_behaviors),
+                "obs_hard_decel": self.obs.get("obs_hard_decel", ""),
+                "obs_pass_events": self.obs.get("obs_pass_events", ""),
+                "obs_min_pass_gap_m": self.obs.get("obs_min_pass_gap_m", ""),
+                "obs_min_ttc_s": self.obs.get("obs_min_ttc_s", ""),
+                "obs_npc_seen": self.obs.get("obs_npc_seen", ""),
+                "obs_window_s": self.obs.get("obs_window_s", "")}
 
     def reset(self):
         self.state = ""
@@ -733,6 +769,7 @@ class Judge:
         self._last_xy = None
         self._obs_start = None
         self._obs_samples = []
+        self.obs = {}
         self.traffic = ""
         self.stall_factor = ""
 
@@ -873,7 +910,9 @@ def run(args):
                      "lane_overlap_m", "lane_block_pct",
                      "det_latency_s", "tts_fault_s", "deg_dist_m", "min_gap_m", "traffic",
                      "time_to_stop_s", "collisions", "collision_types",
-                     "stall_factor", "t_hazard_s", "wall_s"])   # v2 열 2종
+                     "stall_factor", "t_hazard_s", "wall_s",
+                     "obs_hard_decel", "obs_pass_events", "obs_min_pass_gap_m",
+                     "obs_min_ttc_s", "obs_npc_seen", "obs_window_s"])  # v4 관측창
         interrupted = False
         for i, case in enumerate(cases):
             if interrupted:
@@ -894,6 +933,7 @@ def run(args):
                 procs.kill_all()
                 if judge:
                     judge.reset()
+                    judge.npc_style = case["npc"]
                 RESULTS_JSON.unlink(missing_ok=True)
 
                 procs.docker_bg(LB_CONTAINER, BRIDGE_CMD, "bridge")
@@ -965,7 +1005,10 @@ def run(args):
                    detail.get("time_to_stop_s", ""),
                    n_coll, coll_types,
                    detail.get("stall_factor", ""), detail.get("t_hazard_s", ""),
-                   wall]
+                   wall,
+                   detail.get("obs_hard_decel", ""), detail.get("obs_pass_events", ""),
+                   detail.get("obs_min_pass_gap_m", ""), detail.get("obs_min_ttc_s", ""),
+                   detail.get("obs_npc_seen", ""), detail.get("obs_window_s", "")]
             wr.writerow(row)
             f.flush()
             print(f"[runner] result: {outcome} ({wall}s)")
