@@ -268,3 +268,20 @@ net.ipv4.ipfrag_high_thresh=134217728  # 128 MiB, default is 256 KiB
     </Domain>
 </CycloneDDS>
 ```
+
+---
+
+## [연구용 포크 메모] 인용 (2026-08-12)
+
+이 포크 기반 실험/논문은 원 저장소(TUMFTM AWCL)의 요구에 따라 아래를 인용한다:
+
+```bibtex
+@inproceedings{awcl_26,
+  title = {Empirical mapping of technical bottlenecks in autonomous driving: A cross-platform evaluation of simulated and real-world performance},
+  author = {Kaljavesi, Gemb and Majstorovic, Domagoj and Clement, Maxime and Diermeyer, Frank},
+  year = {2026},
+  howpublished = {Preprint}
+}
+```
+
+폴트 모델(lso/lcl) 근거 문헌 목록: `~/fs_ws/paper.md` 하단 "인용 필수 목록" 참조.

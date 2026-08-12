@@ -137,7 +137,14 @@ class AutowareE2EAgent(TUMROSBaseAgent):
 
         # V2X Traffic Light
         self._lanelet_map_subscriber = self.ros_node.create_subscription(MarkerArray, "/map/vector_map_marker", self._get_traffic_lights_from_lanelet, qos_profile=QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
-        self._external_traffic_light_publisher = self.ros_node.create_publisher(TrafficLightGroupArray, "/perception/traffic_light_recognition/traffic_signals", qos_profile=QoSProfile(depth=1, durability=DurabilityPolicy.VOLATILE))
+        # [v4.6f] QoSProfile(depth=1, durability=VOLATILE) 부분지정 구성에서 이
+        # publisher만 wire 무발신(동일 노드 타 토픽 정상, 컨테이너 rclpy 자가
+        # 테스트 정상, 그래프엔 등록 — 0812 새벽 실측). 기본 QoS로 교체.
+        self._external_traffic_light_publisher = self.ros_node.create_publisher(TrafficLightGroupArray, "/perception/traffic_light_recognition/traffic_signals", 10)
+        # [v4.6e] arbiter 정식 V2X 입력(external) — 직접 발행은 arbiter의 judged
+        # 출력과 경합해 신호가 됐다 안 됐다 한다(0812 nf 교차로 스턱 실측).
+        # arbiter가 camera(internal)와 병합하도록 external에도 같은 메시지 발행.
+        self._external_v2x_arbiter_publisher = self.ros_node.create_publisher(TrafficLightGroupArray, "/perception/traffic_light_recognition/external/traffic_signals", 10)
 
         # Sync stuff
         self._aw_time = None
@@ -205,6 +212,10 @@ class AutowareE2EAgent(TUMROSBaseAgent):
             self.ros_node.declare_parameter("ln", os.environ.get("ln", ""))
             self.ros_node.declare_parameter("lnf", os.environ.get("lnf", ""))
             self.ros_node.declare_parameter("lnr", os.environ.get("lnr", ""))
+            # lso=<t>:<ratio>:<width_deg>: 전방 라이다 오염 섹터 드롭아웃 (기본 0.6:90)
+            self.ros_node.declare_parameter("lso", os.environ.get("lso", ""))
+            # lcl=<t>:<clutter_n>:<far_ratio>: 강수 근거리 클러터+원거리 감쇠 (기본 1500:0.15)
+            self.ros_node.declare_parameter("lcl", os.environ.get("lcl", ""))
             self.ros_node.declare_parameter("imn", os.environ.get("imn", ""))
             self.ros_node.declare_parameter("gn", os.environ.get("gn", ""))
             # imb=<t>:<bias_rad_s>: constant gyro z bias (see run_step)
@@ -272,7 +283,32 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         self._use_v2x_traffic_light = not _cam_fault
         self._publish_cam_image = True
         print(f"[TL SOURCE] {'camera (camera-fault case)' if _cam_fault else 'V2X ground truth'}")
-        self._traffic_light_ids = set()  
+        self._traffic_light_ids = set()
+        # [v4.6d] 마커 스크레이프는 발행/수신 레이스로 ID가 새는 수가 있다
+        # (0812 실측: 9416 누락 -> "signal data not received" -> nf 교차로 영구
+        # 대기). lanelet2 osm에서 traffic_light 규제요소를 직접 파싱해 합집합.
+        try:
+            import xml.etree.ElementTree as _ET
+            # repo 마운트 사본을 1순위로 (awcl_maps 마운트는 agent 프로세스에서
+            # errno2가 나는 미스터리 — 0812 실측. 맵 수정 시 사본 cp 동기화 필수)
+            _map_osm = os.environ.get("LL2_MAP_OSM", "")
+            if not _map_osm:
+                for _cand in (
+                        "/home/taewook/autoware_carla_leaderboard/experiments/"
+                        "results/lanelet2_map_for_snapshot.osm",
+                        "/home/taewook/awcl_maps/Town07/lanelet2_map.osm"):
+                    if os.path.exists(_cand):
+                        _map_osm = _cand
+                        break
+            for _rel in _ET.parse(_map_osm).getroot().findall("relation"):
+                _tags = {t.get("k"): t.get("v") for t in _rel.findall("tag")}
+                if (_tags.get("type") == "regulatory_element"
+                        and _tags.get("subtype") == "traffic_light"):
+                    self._traffic_light_ids.add(int(_rel.get("id")))
+            print(f"[TL SOURCE] lanelet2 osm: "
+                  f"{len(self._traffic_light_ids)} traffic-light reg elems")
+        except Exception as _e:
+            print(f"[TL SOURCE] osm parse failed ({_e}) — marker scrape only")
 
         self._steps_before_init = 0
         self._counter = 0
@@ -359,6 +395,28 @@ class AutowareE2EAgent(TUMROSBaseAgent):
             except Exception as e:
                 print(f"[FAULT INJECTION] noise request on /{name} failed:", e)
 
+    def _set_bridge_params(self, node_names, values):
+        # [v4.6] lso/lcl 등 임의 브리지 파라미터 주입 (noise_sigma 전용이던
+        # _set_bridge_noise의 일반화 버전)
+        for name in node_names:
+            try:
+                cli = self.ros_node.create_client(SetParameters, f"/{name}/set_parameters")
+                req = SetParameters.Request()
+                ps = []
+                for k, v in values.items():
+                    if isinstance(v, int):
+                        pv = ParameterValue(type=ParameterType.PARAMETER_INTEGER,
+                                            integer_value=v)
+                    else:
+                        pv = ParameterValue(type=ParameterType.PARAMETER_DOUBLE,
+                                            double_value=float(v))
+                    ps.append(RclParameter(name=k, value=pv))
+                req.parameters = ps
+                cli.call_async(req)
+                print(f"[FAULT INJECTION] {values} requested on /{name}")
+            except Exception as e:
+                print(f"[FAULT INJECTION] param request on /{name} failed:", e)
+
     # After initial initialization the run step method should
     # wait for the next control signal
 
@@ -393,13 +451,18 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                 client = CarlaDataProvider.get_client()
                 tm = client.get_trafficmanager(CarlaDataProvider.get_traffic_manager_port())
                 styled = 0
+                # [v4.6i] 차량별 랜덤 부주의: TM 차량은 전지적이라 "시야 제한"은
+                # 불가 — ignore 확률로 사람의 부주의를 분포로 흉내낸다.
+                # TM_SEED 시드 고정 -> ours/baseline 짝케이스가 같은 성격 분포.
+                import random as _rnd
+                _r = _rnd.Random(os.environ.get("TM_SEED", "0"))
                 for v in CarlaDataProvider.get_world().get_actors().filter("vehicle.*"):
                     if v.attributes.get("role_name") in ("hero", "ego_vehicle"):
                         continue
-                    tm.vehicle_percentage_speed_difference(v, -20.0)  # 20% above limit
+                    tm.vehicle_percentage_speed_difference(v, -_r.uniform(5.0, 30.0))
                     tm.distance_to_leading_vehicle(v, 1.2)            # tailgating (0.5 pinned stopped egos)
-                    tm.ignore_vehicles_percentage(v, 20.0)            # yields less
-                    tm.ignore_lights_percentage(v, 10.0)              # runs some lights
+                    tm.ignore_vehicles_percentage(v, _r.uniform(0.0, 40.0))
+                    tm.ignore_lights_percentage(v, _r.uniform(0.0, 20.0))
                     styled += 1
                 print(f"[NPC] aggressive style applied to {styled} vehicles")
             except Exception as e:
@@ -593,6 +656,45 @@ class AutowareE2EAgent(TUMROSBaseAgent):
             if spec and fault_elapsed >= spec[0]:
                 self._set_bridge_noise(nodes, spec[1], spec[2])
                 self._bridge_noise_started.add(flag)
+
+        # [v4.6] lso=<t>:<T>:<width_deg> — 전방 라이다 오염 섹터 (커버 투과율 T,
+        # Trierweiler 2019 실측 + Goodin 검출문턱; 전방 센서만)
+        if "lso" not in self._bridge_noise_started:
+            raw = str(self.ros_node.get_parameter("lso").value or "")
+            if raw:
+                parts = raw.split(":")
+                try:
+                    t0 = float(parts[0])
+                    trans = float(parts[1]) if len(parts) > 1 and parts[1] else 0.35
+                    width = float(parts[2]) if len(parts) > 2 and parts[2] else 90.0
+                    if fault_elapsed >= t0:
+                        self._set_bridge_params(["lidar_bridge_1"], {
+                            "cover_transmission": trans,
+                            "dropout_yaw_center": 0.0,
+                            "dropout_yaw_width": width})
+                        self._bridge_noise_started.add("lso")
+                except ValueError:
+                    print(f"[FAULT INJECTION] invalid lso spec {raw!r} — ignored")
+
+        # [v4.6] lcl=<t>:<rain_mmh>:<clutter_n> — 강수 (Beer-Lambert 감쇠
+        # alpha=0.01*Rr^0.6 + Goodin 거리지터 + 근거리 클러터; 양쪽 라이다)
+        if "lcl" not in self._bridge_noise_started:
+            raw = str(self.ros_node.get_parameter("lcl").value or "")
+            if raw:
+                parts = raw.split(":")
+                try:
+                    t0 = float(parts[0])
+                    rain = float(parts[1]) if len(parts) > 1 and parts[1] else 5.0
+                    clutter_n = int(float(parts[2])) if len(parts) > 2 and parts[2] else 1500
+                    if fault_elapsed >= t0:
+                        self._set_bridge_params(
+                            ["lidar_bridge_1", "lidar_bridge_2"], {
+                                "rain_rate_mmh": rain,
+                                "clutter_points": clutter_n,
+                                "clutter_range_m": 10.0})
+                        self._bridge_noise_started.add("lcl")
+                except ValueError:
+                    print(f"[FAULT INJECTION] invalid lcl spec {raw!r} — ignored")
 
         # imn=<t>:<sigma>: IMU noise (sigma rad/s on gyro, 10*sigma m/s^2 on accel)
         # gn=<t>:<sigma>: position noise (meters) on the pose fed to the EKF
@@ -905,6 +1007,10 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         
         if self._use_v2x_traffic_light:
             # We set all autoware traffic lights to the state of the currently affecting traffic light
+            # [v4.6e 계측] 발행 경로 무발신 미스터리 — 100틱마다 상태 출력
+            if self._counter % 100 == 0:
+                print(f"[TL V2X] tick={self._counter} ids={len(self._traffic_light_ids)}"
+                      f" v2x={self._use_v2x_traffic_light}")
             traffict_light_state = self._awp_converter.get_current_traffic_light_state()
             traffic_light_msg = TrafficLightGroupArray()
             traffic_light_msg.stamp = aw_time
@@ -917,7 +1023,8 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                 traffic_light_group.elements[0].status = 2
                 traffic_light_group.elements[0].confidence = 1.0 
                 traffic_light_msg.traffic_light_groups.append(traffic_light_group)           
-            self._external_traffic_light_publisher.publish(traffic_light_msg) 
+            self._external_traffic_light_publisher.publish(traffic_light_msg)
+            self._external_v2x_arbiter_publisher.publish(traffic_light_msg)
 
 
         self._ready_state_pub.publish(self.ready_status)

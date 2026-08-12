@@ -90,19 +90,32 @@ CARLA_RESTART_EVERY = 1
 SEVERITY = {
     "ln":  {"mid": 0.3,  "high": 0.6},
     "cn":  {"mid": 15.0, "high": 30.0},
-    "imn": {"mid": 0.05, "high": 0.15},
+    # [v4.6h] imn 재보정: 감지기(EKF innovation EMA)가 느려 0.05→det 210s,
+    # 0.15→171s = 미션長 초과 -> 실질 미감지. 0.5→53.6s (프로브 실측). mid는
+    # "미션 내 감지 가능" 원칙에 맞춘 스트레스 강도로 문서화.
+    "imn": {"mid": 0.5, "high": 1.5},
     "gn":  {"mid": 1.0,  "high": 2.5},
     "imb": {"mid": 0.3,  "high": 1.0},   # v2: 자이로 바이어스 [rad/s]
     "imd": {"mid": 0.005, "high": 0.02},  # 자이로 바이어스 램프(드리프트) [rad/s^2]
                                           # mid: 60s에 imb-mid 수준 도달, high: 15s
+    # [v4.6] 현실형 라이다 열화 2종 (2026-08-12 문헌조사: 현실 빈도 1·2위 유형,
+    # 물리 파라미터화 — lso: 커버투과율T:섹터폭deg (Trierweiler/Goodin),
+    # lcl: 강우량mm/h:클러터점수 (Beer-Lambert alpha=0.01*Rr^0.6, LISA 클러터))
+    # lso T 보정(v4.6b): 섹터-far 감지기 기준 역산 — mid 유효거리 ~55m(전방 원거리
+    # 절반 잔존 -> 게이트 통과, 이동 MRC), high ~12m(전방 실명 -> DEFER).
+    # CARLA intensity가 재질 무시(~e^-0.004d)라 문헌 T와 절대값은 다름
+    "lso": {"mid": "0.33:90", "high": "0.07:150"},
+    "lcl": {"mid": "5:1500", "high": "25:4000"},
 }
 SEV_LEVELS = ["mid", "high"]
 # ln: BOTH lidars noise; cn: camera noise; imn: IMU noise; gn: GNSS/EKF pose
 # noise; cf: camera destroyed; lf: front lidar destroyed; nf: no-fault control
-FAULT_KINDS = ["ln", "cn", "imn", "gn", "cf", "lf", "nf"]
+FAULT_KINDS = ["cn", "imn", "gn", "lso", "lcl", "cf", "lf", "nf"]
 # v2 추가 고장: imb=자이로 바이어스, rain=폭우 프리셋, gb=GNSS 블랙아웃.
 # 기본 매트릭스에는 넣지 않고 --fault 로 명시 선택했을 때만 실행된다.
-EXTRA_FAULT_KINDS = ["imb", "imd", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"]
+EXTRA_FAULT_KINDS = ["ln", "imb", "imd", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"]
+# [v4.6] ln(가우시안 반경노이즈)은 본 매트릭스에서 제외 — 현실 대표성 낮음
+# (문헌: 지터는 실제 열화의 최소 성분). lso/lcl이 대체, ln은 ablation용 EXTRA.
 NO_SEVERITY = {"cf", "lf", "nf", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"}  # no severity dimension (nf: no trigger either)
 # fault time is a RANDOM COVARIATE, not a matrix dimension: fixed trigger
 # times pinned the fault to the same spots so the supervisor always picked
@@ -253,7 +266,7 @@ class Procs:
         # (observed: 4 stacked autoware instances -> map never loads).
         for container, pats in [
             (LB_CONTAINER, ["ros-args", "leaderboard_evaluator", "ros2 launch",
-                            "run_leaderboard"]),
+                            "run_leaderboard", "tl_v2x_relay"]),
             (AW_CONTAINER, ["ros-args", "component_container", "robot_state_publisher",
                             "rviz2", "ros2 launch"]),
         ]:
@@ -972,6 +985,16 @@ def run(args):
                                      LEADERBOARD_CMD.format(
                                          faults=fault_args(case, args.dg)),
                                      "leaderboard")
+                # [v4.6g] V2X 신호등 릴레이 — agent 프로세스의 rclpy가
+                # TrafficLightGroupArray 발행을 wire에 못 싣는 문제(0812)를
+                # 독립 프로세스로 우회. 카메라-폴트 케이스는 카메라 인식 유지.
+                if case["fault"] not in ("cf", "cn", "cfl", "cfl2", "mix"):
+                    procs.docker_bg(
+                        LB_CONTAINER,
+                        "source /opt/ros/humble/setup.bash && "
+                        "source /home/taewook/autoware_carla_leaderboard/install/setup.bash && "
+                        "python3 /home/taewook/autoware_carla_leaderboard/experiments/tl_v2x_relay.py",
+                        "tl_relay")
                 if not ego_alive(args.dry):
                     raise RuntimeError("ego odometry never appeared")
                 if args.dry:
