@@ -216,6 +216,9 @@ class AutowareE2EAgent(TUMROSBaseAgent):
             self.ros_node.declare_parameter("lso", os.environ.get("lso", ""))
             # lcl=<t>:<clutter_n>:<far_ratio>: 강수 근거리 클러터+원거리 감쇠 (기본 1500:0.15)
             self.ros_node.declare_parameter("lcl", os.environ.get("lcl", ""))
+            # gm=<t>:<sigma_m>:<tau_s>: GNSS 1차 Gauss-Markov 상관편향 (멀티패스/
+            # NLOS 모사 — 백색 gn과 달리 EKF가 믿고 따라가는 최악 케이스)
+            self.ros_node.declare_parameter("gm", os.environ.get("gm", ""))
             self.ros_node.declare_parameter("imn", os.environ.get("imn", ""))
             self.ros_node.declare_parameter("gn", os.environ.get("gn", ""))
             # imb=<t>:<bias_rad_s>: constant gyro z bias (see run_step)
@@ -263,6 +266,9 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         self._npc_styled = False
         self._imu_noise_sigma = 0.0
         self._gnss_noise_sigma = 0.0
+        self._gm_sigma = 0.0        # [gm] 정상상태 편향 크기 [m] (0=비활성)
+        self._gm_tau = 30.0         # [gm] 상관시간 [s]
+        self._gm_bias = [0.0, 0.0]  # [gm] 현재 편향 상태 (x, y)
         self._imu_gyro_bias = 0.0
         self._imu_gyro_drift = 0.0
         self._rain_applied = False
@@ -702,6 +708,16 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         self._imu_noise_sigma = spec[1] if spec and fault_elapsed >= spec[0] else 0.0
         spec = self._parse_fault(self.ros_node.get_parameter("gn").value, 1.0)
         self._gnss_noise_sigma = spec[1] if spec and fault_elapsed >= spec[0] else 0.0
+        # [gm] t:sigma:tau — _parse_fault의 3번째 필드(sector 자리)를 tau로 재활용
+        gm_spec = self._parse_fault(self.ros_node.get_parameter("gm").value, 3.0)
+        if gm_spec and fault_elapsed >= gm_spec[0]:
+            self._gm_sigma = gm_spec[1]
+            try:
+                self._gm_tau = float(gm_spec[2]) if gm_spec[2] else 30.0
+            except (TypeError, ValueError):
+                self._gm_tau = 30.0
+        else:
+            self._gm_sigma = 0.0
 
         # imb=<t>:<bias_rad_s>: constant gyro z (yaw-rate) bias from t on.
         # White noise (imn) is zero-mean and gets absorbed by the EKF's
@@ -914,7 +930,8 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         if not self._fault_announced and (
                 self._bridge_noise_started or self._camera_killed
                 or self._lidar_killed or self._imu_noise_sigma > 0.0
-                or self._gnss_noise_sigma > 0.0 or self._imu_gyro_bias != 0.0
+                or self._gnss_noise_sigma > 0.0 or self._gm_sigma > 0.0
+                or self._imu_gyro_bias != 0.0
                 or self._imu_gyro_drift != 0.0
                 or self._rain_applied or self._gnss_blackout):
             self._fault_announced = True
@@ -941,8 +958,39 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         ndt_pose_msg.pose.pose.position = Point(**position["position"])
         ndt_pose_msg.pose.pose.orientation = Quaternion(**position["orientation"])
         if self._gnss_noise_sigma > 0.0:
-            ndt_pose_msg.pose.pose.position.x += float(np.random.normal(0.0, self._gnss_noise_sigma))
-            ndt_pose_msg.pose.pose.position.y += float(np.random.normal(0.0, self._gnss_noise_sigma))
+            # [v5 절제] gn 고장의 실제 주입 지점 — 전용 RNG + 파형 트레이스
+            if not hasattr(self, "_fault_rng"):
+                import os as _os
+                self._fault_rng = np.random.default_rng(
+                    int(_os.environ.get("FAULT_SEED", "0")))
+                self._fault_idx = 0
+                _tp = _os.environ.get("FAULT_TRACE", "")
+                self._fault_tf = open(_tp, "a", buffering=1) if _tp else None
+            _gn = self._fault_rng.normal(0.0, self._gnss_noise_sigma, 2)
+            ndt_pose_msg.pose.pose.position.x += float(_gn[0])
+            ndt_pose_msg.pose.pose.position.y += float(_gn[1])
+            if self._fault_tf is not None:
+                self._fault_tf.write(f"{self._fault_idx},{_gn[0]:.6f},{_gn[1]:.6f}\n")
+            self._fault_idx += 1
+        # [gm] 1차 Gauss-Markov 상관편향: b <- a*b + N(0, sigma*sqrt(1-a^2)).
+        # a=exp(-dt/tau) — 편향이 tau 시간 스케일로 같은 방향을 유지하며 흘러
+        # EKF가 실제 이동으로 믿고 추종하는 멀티패스/NLOS형 최악 케이스.
+        if self._gm_sigma > 0.0:
+            _dt = 0.05  # sim tick
+            _a = math.exp(-_dt / max(self._gm_tau, 0.1))
+            _drive = self._gm_sigma * math.sqrt(max(1.0 - _a * _a, 1e-9))
+            if not hasattr(self, "_fault_rng"):
+                import os as _os
+                self._fault_rng = np.random.default_rng(
+                    int(_os.environ.get("FAULT_SEED", "0")))
+                self._fault_idx = 0
+                _tp = _os.environ.get("FAULT_TRACE", "")
+                self._fault_tf = open(_tp, "a", buffering=1) if _tp else None
+            for _i in (0, 1):
+                self._gm_bias[_i] = _a * self._gm_bias[_i] + float(
+                    self._fault_rng.normal(0.0, _drive))
+            ndt_pose_msg.pose.pose.position.x += self._gm_bias[0]
+            ndt_pose_msg.pose.pose.position.y += self._gm_bias[1]
         # gb: during a GNSS blackout the pose is simply not published
         if not self._gnss_blackout:
             self._gnss_pose_pub.publish(ndt_pose_msg)
@@ -991,13 +1039,28 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         )
         imu_msg.linear_acceleration = Vector3(**loc_acc["position"])
         if self._imu_noise_sigma > 0.0:
+            # [v5 절제실험] 전용 fault RNG — 전역 np.random과 분리해 팔 간
+            # 코드 경로 차이가 파형을 오염 못 하게. FAULT_SEED로 실현 고정,
+            # FAULT_TRACE로 샘플 로그 (same-realization 증빙).
+            if not hasattr(self, "_fault_rng"):
+                import os as _os
+                self._fault_rng = np.random.default_rng(
+                    int(_os.environ.get("FAULT_SEED", "0")))
+                self._fault_idx = 0
+                _tp = _os.environ.get("FAULT_TRACE", "")
+                self._fault_tf = open(_tp, "a", buffering=1) if _tp else None
             s = self._imu_noise_sigma
-            imu_msg.angular_velocity.x += float(np.random.normal(0.0, s))
-            imu_msg.angular_velocity.y += float(np.random.normal(0.0, s))
-            imu_msg.angular_velocity.z += float(np.random.normal(0.0, s))
-            imu_msg.linear_acceleration.x += float(np.random.normal(0.0, 10.0 * s))
-            imu_msg.linear_acceleration.y += float(np.random.normal(0.0, 10.0 * s))
-            imu_msg.linear_acceleration.z += float(np.random.normal(0.0, 10.0 * s))
+            _n = self._fault_rng.normal(0.0, s, 6)
+            imu_msg.angular_velocity.x += float(_n[0])
+            imu_msg.angular_velocity.y += float(_n[1])
+            imu_msg.angular_velocity.z += float(_n[2])
+            imu_msg.linear_acceleration.x += float(_n[3] * 10.0)
+            imu_msg.linear_acceleration.y += float(_n[4] * 10.0)
+            imu_msg.linear_acceleration.z += float(_n[5] * 10.0)
+            if self._fault_tf is not None:
+                self._fault_tf.write(
+                    f"{self._fault_idx},{_n[2]:.6f}\n")
+            self._fault_idx += 1
         # imb: constant yaw-rate bias on the gyro z axis (integrates into a
         # growing heading error downstream — see the imb comment in run_step)
         # imd: ramp bias(드리프트)도 같은 축에 합산

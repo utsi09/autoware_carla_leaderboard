@@ -52,7 +52,9 @@ LEADERBOARD_CMD = ("cd /home/taewook/autoware_carla_leaderboard && "
 CDR_CMD = "cd ~/fs_ws && source install/setup.bash && CDR_DEMO_NO_ERROR=1 ros2 launch cdr_monitor cdr_monitor_awcl.launch.py"
 DUMP_CMD = ("source ~/autoware_awcl/autoware/install/setup.bash && "
             "ros2 run autoware_diagnostic_graph_utils dump_node")
-SUP_CMD = ("cd ~/fs_ws && source install/setup.bash && "
+# [v4.9k] autoware install 선소스: tier4_planning_msgs(속도 캡 메시지) 확보
+SUP_CMD = ("source ~/autoware_awcl/autoware/install/setup.bash >/dev/null 2>&1; "
+           "cd ~/fs_ws && source install/setup.bash && "
            "ros2 launch mrm_supervisor mrm_supervisor.launch.py baseline:={baseline}")
 
 AUTOWARE_READY_NODE = "behavior_path_planner"
@@ -83,6 +85,7 @@ HAZARD_STOP_S = 60.0
 # verdicts). ~1 min/restart is cheaper than a wasted 7-min case, and a fresh
 # world per case is better experimental hygiene anyway (no leftover actors).
 CARLA_RESTART_EVERY = 1
+DEST_XY = None   # [v4.7] --dg 목적지 (x, y) — 완주 근사 판정용 (main에서 설정)
 
 # ---------------------------------------------------------------- case matrix
 # per-fault severity values (units differ: ln meters, cn pixel sigma 0-255,
@@ -106,6 +109,9 @@ SEVERITY = {
     # CARLA intensity가 재질 무시(~e^-0.004d)라 문헌 T와 절대값은 다름
     "lso": {"mid": "0.33:90", "high": "0.07:150"},
     "lcl": {"mid": "5:1500", "high": "25:4000"},
+    # [gm] GNSS Gauss-Markov 상관편향: sigma[m]:tau[s] — 멀티패스/NLOS의
+    # 시간상관 오차 (Langel'21 GM 모델, Bhatti'07 느린오차=최악). EXTRA 폴트.
+    "gm": {"mid": "3.0:30", "high": "8.0:30"},
 }
 SEV_LEVELS = ["mid", "high"]
 # ln: BOTH lidars noise; cn: camera noise; imn: IMU noise; gn: GNSS/EKF pose
@@ -113,7 +119,7 @@ SEV_LEVELS = ["mid", "high"]
 FAULT_KINDS = ["cn", "imn", "gn", "lso", "lcl", "cf", "lf", "nf"]
 # v2 추가 고장: imb=자이로 바이어스, rain=폭우 프리셋, gb=GNSS 블랙아웃.
 # 기본 매트릭스에는 넣지 않고 --fault 로 명시 선택했을 때만 실행된다.
-EXTRA_FAULT_KINDS = ["ln", "imb", "imd", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"]
+EXTRA_FAULT_KINDS = ["ln", "gm", "imb", "imd", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"]
 # [v4.6] ln(가우시안 반경노이즈)은 본 매트릭스에서 제외 — 현실 대표성 낮음
 # (문헌: 지터는 실제 열화의 최소 성분). lso/lcl이 대체, ln은 ablation용 EXTRA.
 NO_SEVERITY = {"cf", "lf", "nf", "rain", "gb", "cfl", "mix", "cfl2", "lfl2"}  # no severity dimension (nf: no trigger either)
@@ -225,6 +231,11 @@ class Procs:
         # force domain 0 regardless of the env baked into the container;
         # -u matches the user of the manual (working) terminals
         full = ["docker", "exec", "-e", "ROS_DOMAIN_ID=0"]
+        # [v5 절제] 시드 env 패스스루 — 오케스트레이터가 케이스별로 설정
+        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL"):
+            _sv = os.environ.get(_sk)
+            if _sv:
+                full += ["-e", f"{_sk}={_sv}"]
         if user:
             full += ["-u", user]
         full += [container, "bash", "-lc", cmd]
@@ -266,7 +277,7 @@ class Procs:
         # (observed: 4 stacked autoware instances -> map never loads).
         for container, pats in [
             (LB_CONTAINER, ["ros-args", "leaderboard_evaluator", "ros2 launch",
-                            "run_leaderboard", "tl_v2x_relay"]),
+                            "run_leaderboard", "tl_v2x_relay", "hazard_injector"]),
             (AW_CONTAINER, ["ros-args", "component_container", "robot_state_publisher",
                             "rviz2", "ros2 launch"]),
         ]:
@@ -277,8 +288,10 @@ class Procs:
         # dump_node included: orphaned dump instances duplicate the node name ->
         # duplicated_node_checker ERROR -> every mode unavailable -> permanent
         # emergency stop (three strays found blocking departure, 0731)
+        # dummy_defer 추가(0815 실측): 러너 강제종료가 남긴 dummy_defer 2마리가
+        # 같은 노드명으로 떠서 duplicated_node_checker ERROR -> 전 케이스 출발불가
         for pat in ["cdr_monitor", "mrm_supervisor", "awcl_adapter", "ros2 launch",
-                    "diagnostic_graph_utils dump_node"]:
+                    "diagnostic_graph_utils dump_node", "dummy_defer"]:
             subprocess.run(["pkill", "-9", "-f", pat], capture_output=True)
         # the pattern above only matches the `ros2 run` wrapper; killing it -9
         # orphans the actual dump_node binary (path has a slash, not a space),
@@ -313,7 +326,10 @@ def carla_alive():
 
 
 CARLA_DIR = "/home/taewook"          # CarlaUE4.sh lives here, launched as ./CarlaUE4.sh
-CARLA_LAUNCH = "cd /home/taewook && ./CarlaUE4.sh --ros2"
+# [0813 밤] 모니터 전원 분리로 X 출력 0개 -> UE4가 창 초기화 세그폴트 반복
+# (carla_archive.log Signal=11 연쇄, lcl 141/180 조기종료의 원인). 헤드리스
+# 렌더링이면 디스플레이 유무와 무관 — 센서 캡처는 동일하게 렌더된다.
+CARLA_LAUNCH = "cd /home/taewook && ./CarlaUE4.sh --ros2 -RenderOffScreen"
 CARLA_CHECK_CMD = ("cd /home/taewook/autoware_carla_leaderboard && "
                    "source carla_envs.sh >/dev/null 2>&1; "
                    "python3 -c \"import carla; c=carla.Client('localhost',2000); "
@@ -657,6 +673,13 @@ class Judge:
                 return "SCENARIO_ENDED", self._detail()
             if (self.moved and self.state in ("", "NORMAL")
                     and stationary_for > JUNCTION_STUCK_S):
+                # [v4.7] 목적지 30m 이내 정지 = 사실상 완주. dg 지점(-102,95)의
+                # 도착 pull-over가 goal_planner "0 candidates"로 만성 실패(7/31
+                # 부터 전 배터리 동일)라 24m 앞 정지가 STUCK으로 오분류되던 것 —
+                # 임무 수행은 끝났고 마지막 기동만 맵 특이점이므로 완주로 판정.
+                if self.pose is not None and DEST_XY is not None \
+                        and math.dist(self.pose, DEST_XY) <= 30.0:
+                    return "ROUTE_COMPLETE_NEAR", self._detail()
                 self.stall_factor = capture_stall_factor()   # 확정 직전 1회 (v2)
                 return "STUCK_AT_JUNCTION", self._detail()
             if self.state.startswith("MRM_MOVE") and stopped_for > (
@@ -971,13 +994,24 @@ def run(args):
                     # -> 출발 불가. cdr은 정상 기동(점수만 낼 뿐 개입 없음),
                     # supervisor 유닛은 더미 OK 발행으로 그래프만 만족시킨다.
                     procs.host_bg(cdr_cmd, "cdr")
-                    procs.host_bg(
-                        "export ROS_DOMAIN_ID=0; "
-                        "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp; "
-                        "export CYCLONEDDS_URI=/home/taewook/cyclone_localhost.xml; "
-                        "source /opt/ros/humble/setup.bash && "
-                        "python3 /home/taewook/autoware_carla_leaderboard/experiments/dummy_defer.py",
-                        "dummy_defer")
+                    # [v5 절제] SUP_SHADOW=1: A1(native)에도 진짜 supervisor를
+                    # 섀도(전이만·무행동)로 — 4팔 동일 감지기로 t_detect 동등화.
+                    # 섀도가 defer_request OK를 계속 내므로 더미는 생략.
+                    if os.environ.get("SUP_SHADOW") == "1":
+                        procs.host_bg(
+                            "export SUP_SHADOW=1; "
+                            + SUP_CMD.format(baseline="false"), "supervisor")
+                        _shadow_sup = True
+                    else:
+                        _shadow_sup = False
+                    if not _shadow_sup:
+                        procs.host_bg(
+                            "export ROS_DOMAIN_ID=0; "
+                            "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp; "
+                            "export CYCLONEDDS_URI=/home/taewook/cyclone_localhost.xml; "
+                            "source /opt/ros/humble/setup.bash && "
+                            "python3 /home/taewook/autoware_carla_leaderboard/experiments/dummy_defer.py",
+                            "dummy_defer")
                 # --mrm-off: 모니터·MRM 개입 없이 고장 진행만 관찰 (FTTI 도출)
                 # per-unit graph levels — to identify which unit flaps the MRM
                 procs.host_bg(DUMP_CMD, "diag_dump")
@@ -995,6 +1029,28 @@ def run(args):
                         "source /home/taewook/autoware_carla_leaderboard/install/setup.bash && "
                         "python3 /home/taewook/autoware_carla_leaderboard/experiments/tl_v2x_relay.py",
                         "tl_relay")
+                # [v4.9] 엣지 케이스 주입기 (HAZARD=ped=5:22:3 식) — tl_relay와
+                # 같은 독립 프로세스 패턴. env 미설정이면 완전 무동작.
+                _hz = os.environ.get("HAZARD", "")
+                if _hz:
+                    _hmode, _hspec = _hz.split("=", 1)
+                    procs.docker_bg(
+                        LB_CONTAINER,
+                        "cd /home/taewook/autoware_carla_leaderboard && "
+                        "source /opt/ros/humble/setup.bash && "
+                        "source install/setup.bash && "
+                        "source carla_envs.sh >/dev/null 2>&1; "
+                        # --spec=값 형태 필수: shoulder 좌표가 음수로 시작하면
+                        # argparse가 옵션으로 오파싱 (0815 실측: 블로커 전원 미스폰)
+                        # until 래퍼: 케이스 초반 월드 로드 레이스에서 CARLA 클라가
+                        # C++ terminate로 즉사(0816 실측: 로그 0바이트) — 성공(정상
+                        # 종료)까지 2 s 간격 재기동. cleanup pkill이 래퍼도 잡는다.
+                        f"export CASE_TAG={case['fault']}-{case['sev']}-"
+                        f"{case['method']}{'-off' if args.mrm_off else ''}-r{case['rep']}; "
+                        "until python3 experiments/hazard_injector.py "
+                        f"--mode={_hmode} --spec={_hspec} --fault-t={case['t']}; "
+                        "do sleep 2; done",
+                        "hazard")
                 if not ego_alive(args.dry):
                     raise RuntimeError("ego odometry never appeared")
                 if args.dry:
@@ -1080,4 +1136,10 @@ if __name__ == "__main__":
     ap.add_argument("--no-log-archive", action="store_true",
                     help="케이스별 cdr/supervisor 로그 gzip 보관을 끈다")
     args = ap.parse_args()
+    try:
+        if args.dg and args.dg not in ("", "1"):
+            _p = args.dg.split(":")
+            DEST_XY = (float(_p[0]), float(_p[1]))
+    except (ValueError, IndexError):
+        DEST_XY = None
     run(args)
