@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """그림 5-2 재생성: 본 캠페인 MRM 결과 히트맵 (v5 오딧 정정 A4).
 
-baseline은 설계상 차선 내 정지 정책이므로 '대피 성공률 0'이 실패가 아니라
+baseline은 설계상 차선 내 정지 정책이므로 '대피 완료 0'이 실패가 아니라
 정의상 결과(N/A)이다 — v4의 0/45 숫자 셀은 실패로 오독될 여지가 있어,
 baseline 열을 회색 + "N/A — in-lane stop by design" 텍스트로 처리한다.
 
@@ -61,7 +61,7 @@ def main():
             color='#6f6f6f')
 
     ax.set_xticks([0.5, 1.5])
-    ax.set_xticklabels(['ours\n(대피 성공/유효 케이스)', 'baseline\n(차선 내 정지 정책)'])
+    ax.set_xticklabels(['ours\n(대피 완료/전체 유효 케이스)', 'baseline\n(차선 내 정지 정책)'])
     ax.set_yticks([i + 0.5 for i in range(len(rows))])
     ax.set_yticklabels(['%s  (%s)' % (k, FAULT_KO[k.split('-')[0]]) for k in rows],
                        fontsize=9)
@@ -72,7 +72,7 @@ def main():
     ax.set_title('MRM 결과: 대피 vs 차선 내 정지\n(본 캠페인 1,131 유효 케이스 중 고장 케이스, ours 열만 색상)',
                  fontsize=11)
     cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.03)
-    cb.set_label('갓길·주차장 대피 성공률', fontsize=9)
+    cb.set_label('갓길·주차장 대피 완료 비율', fontsize=9)
     cb.outline.set_visible(False)
     fig.savefig(OUT)
     print('saved', OUT, 'ours cases:', total)
