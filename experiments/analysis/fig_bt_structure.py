@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""그림 3-2 신규: cdr_monitor 행동트리 구조도 (정식 BT 표기).
+"""그림 3-2 (v17): cdr_monitor 행동트리 구조도 (정식 BT 표기).
+
+v17: 박스 내부 소글씨(수식·세부 채널)를 간소화·확대 — 노드명+2~3단어 요지만
+남기고, PublishScores 수식 패널은 제거(세부는 본문 캡션으로 이동).
 
 소스 근거:
   - fs_ws/src/cdr_monitor/behavior_tree/monitor.xml (Sequence/Parallel 구성)
@@ -20,7 +23,7 @@ OUT = '/home/taewook/autoware_carla_leaderboard/doc/figs/fig_bt_structure.png'
 INK = figstyle.INK
 
 
-def box(ax, x, y, w, h, title, sub=None, kind='leaf', fs=8.6, sub_fs=7.6):
+def box(ax, x, y, w, h, title, sub=None, kind='leaf', fs=9.0, sub_fs=8.2):
     """kind: 'seq'(→), 'par'(⇉), 'leaf', 'note'"""
     fill = {'seq': '#dde7f2', 'par': '#e9e2f0', 'leaf': 'white',
             'note': '#f6f1e0'}[kind]
@@ -58,18 +61,18 @@ def edge(ax, p_from, p_to):
 
 def main():
     figstyle.apply()
-    fig, ax = plt.subplots(figsize=(8.6, 5.4))
+    fig, ax = plt.subplots(figsize=(8.6, 4.5))
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis('off')
     ax.grid(False)
 
     # ---- 계층 y 좌표 ----
-    yR = 0.90   # 루트
-    y1 = 0.72   # 1단계 (5개 자식)
-    y2 = 0.50   # 2단계 (센서 그룹)
-    y3 = 0.30   # 3단계 (센서 리프)
-    h = 0.085
+    yR = 0.88   # 루트
+    y1 = 0.66   # 1단계 (5개 자식)
+    y2 = 0.42   # 2단계 (센서 그룹)
+    y3 = 0.18   # 3단계 (센서 리프)
+    h = 0.10
 
     # 루트 Sequence
     r = box(ax, 0.36, yR, 0.28, h, 'MainLoop', '10 Hz tick', kind='seq')
@@ -78,70 +81,43 @@ def main():
     # 1단계 자식 (좌→우 실행 순서)
     w1 = 0.165
     xs1 = [0.015, 0.195, 0.375, 0.555, 0.80]
-    c1 = box(ax, xs1[0], y1, w1, h, 'Subscribers', '속도·헤딩·최근접 장애물',
-             kind='par')
+    c1 = box(ax, xs1[0], y1, w1, h, 'Subscribers', '상태 구독', kind='par')
     c2 = box(ax, xs1[1], y1, w1, h, 'UpdateSystemState', '주행 상태 갱신', kind='leaf')
     c3 = box(ax, xs1[2], y1, w1, h, 'CalculateFtti',
-             'τ_detect 산출 (식 3-6)', kind='leaf')
+             'τ_detect 산출', kind='leaf')
     c4 = box(ax, xs1[3], y1, w1, h, 'SensorChecks', '센서별 병렬 점검', kind='par')
     c5 = box(ax, xs1[4], y1, 0.185, h, 'PublishScores',
-             '섹터·능력 합성 후 발행', kind='leaf')
+             '섹터·능력 합성·발행', kind='leaf')
     for c in (c1, c2, c3, c4, c5):
         edge(ax, root_bot, (c[0], c[1]))
 
     # 실행 순서 표기
-    ax.annotate('', xy=(0.79, y1 - 0.035), xytext=(0.03, y1 - 0.035),
+    ax.annotate('', xy=(0.79, y1 - 0.045), xytext=(0.03, y1 - 0.045),
                 arrowprops=dict(arrowstyle='-|>', color='#8a92a0', lw=1.0))
-    ax.text(0.41, y1 - 0.055, '틱마다 좌 → 우 순차 실행 (Sequence)',
-            ha='center', fontsize=7.6, color='#5a6270')
+    ax.text(0.015, y1 - 0.096, '틱마다 좌→우 순차 실행 (Sequence)',
+            ha='left', fontsize=7.8, color='#5a6270')
 
     # 2단계: SensorChecks의 자식
     par_bot = (c4[0], c4[1] - h)
     w2 = 0.155
     g1 = box(ax, 0.13, y2, w2, h, 'LidarChecks', 'Parallel', kind='par')
     g2 = box(ax, 0.315, y2, w2, h, 'CameraChecks', 'Parallel', kind='par')
-    g3 = box(ax, 0.50, y2, w2, h, 'ImuChecker', '바이어스·노이즈', kind='leaf')
-    g4 = box(ax, 0.685, y2, w2, h, 'GpsChecker', '잔차·점프·침묵', kind='leaf')
+    g3 = box(ax, 0.50, y2, w2, h, 'ImuChecker', '요레이트 감시', kind='leaf')
+    g4 = box(ax, 0.685, y2, w2, h, 'GpsChecker', '위치계 감시', kind='leaf')
     for g in (g1, g2, g3, g4):
         edge(ax, par_bot, (g[0], g[1]))
 
     # 3단계: 센서 리프 (신선도×품질)
     w3 = 0.135
-    l1 = box(ax, 0.055, y3, w3, h, 'LIDAR_front', '신선도×품질·CUSUM',
-             kind='leaf', fs=8.0)
-    l2 = box(ax, 0.21, y3, w3, h, 'LIDAR_rear', '신선도×품질·CUSUM',
-             kind='leaf', fs=8.0)
-    l3 = box(ax, 0.375, y3, w3, h, 'CAMERA_front', '신선도×품질·화소차분',
-             kind='leaf', fs=8.0)
+    l1 = box(ax, 0.055, y3, w3, h, 'LIDAR_front', '신선도·품질', kind='leaf', fs=8.4)
+    l2 = box(ax, 0.21, y3, w3, h, 'LIDAR_rear', '신선도·품질', kind='leaf', fs=8.4)
+    l3 = box(ax, 0.375, y3, w3, h, 'CAMERA_front', '신선도·품질', kind='leaf', fs=8.4)
     edge(ax, (g1[0], g1[1] - h), (l1[0], l1[1]))
     edge(ax, (g1[0], g1[1] - h), (l2[0], l2[1]))
     edge(ax, (g2[0], g2[1] - h), (l3[0], l3[1]))
 
-    # ---- PublishScores 내부 합성 흐름 (주석 패널) ----
-    px, py, pw, ph = 0.575, 0.045, 0.41, 0.195
-    bp = FancyBboxPatch((px, py), pw, ph,
-                        boxstyle='round,pad=0.012,rounding_size=0.012',
-                        fc='#f6f1e0', ec=INK, lw=figstyle.LW_BOX)
-    ax.add_patch(bp)
-    ax.text(px + pw / 2, py + ph - 0.026, 'PublishScores: 3계층 합성 (식 3-3, 3-4)',
-            ha='center', fontsize=8.4, fontweight='bold', color=INK)
-    lines = [
-        '① 센서 점수  $s_i$ = 신선도 × 품질',
-        '② 8방향 섹터  $\\mathrm{sector}_k = 1 - \\Pi(1 - s_i)$   (F, FL, …, B)',
-        '③ 능력  obstacle = $\\Sigma\\, w_k \\cdot \\mathrm{sector}_k$,'
-        '  perception = 0.6·obs+0.4·tl',
-        '발행: /monitor/scores (감독자) · /diagnostics (진단 그래프)',
-    ]
-    for i, s in enumerate(lines):
-        ax.text(px + 0.018, py + ph - 0.06 - i * 0.036, s, ha='left',
-                fontsize=7.7, color='#3a4252')
-    # PublishScores 리프에서 주석 패널로 연결
-    ax.plot([c5[0], c5[0], px + pw / 2, px + pw / 2],
-            [y1, y1 - 0.06, py + ph + 0.05, py + ph],
-            color='#8a92a0', lw=1.0, ls=(0, (3, 2)))
-
     # ---- 표기 범례 ----
-    lx, ly = 0.015, 0.055
+    lx, ly = 0.62, 0.035
     ax.text(lx, ly + 0.12, '표기', fontsize=8.4, fontweight='bold', color=INK)
     for i, (kind, desc) in enumerate([
             ('seq', 'Sequence(→) — 자식을 순서대로 실행'),

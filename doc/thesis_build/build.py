@@ -15,7 +15,7 @@ from content2 import CH3, CH4
 from content3 import CH5, CH6, CH7, REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/.claude/uploads/3a654bb5-ccec-4bf3-a05d-7c11727be86b/1750d3b5-___011.____________Word_Masters_Template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v16_0817.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v17_0817.docx'
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = 'HY신명조'
 
