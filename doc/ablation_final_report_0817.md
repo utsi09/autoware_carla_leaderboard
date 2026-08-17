@@ -9,17 +9,17 @@
 | 팔 | 충돌 | 비고 |
 |---|---|---|
 | A1 native continuation | **7/10** | 4.2 m/s 유지 |
-| A2 detection + in-lane stop | **1/10**¹ | 즉시 충돌 안전 최강, 단 차선 점유 지속 |
+| A2 detection + in-lane stop | **0/10** | 본 표본 최저 충돌률, 단 차선 점유 지속 |
 | A3 uncapped evacuation | **3/10** | 충돌 전부 과도구간 |
 | A4 capped(3.0) evacuation | **4/10** | 〃 |
 
-¹ S05 재실행 A2의 1건은 원장 창 경계 귀속 — 영상 육안 확인 플래그 (영상 전달)
+(구판의 A2 1/10은 수치 감사에서 정정 — S05R A2 창 내 RAW-HIT 0건, 상세는 number_audit_0817.md)
 
 - exact McNemar (사전 지정 primary): A1↔A4 불일치 3:0, p=0.25 /
   A3↔A4 불일치 0:1, p=1.0 → **캡의 충돌 감소 증분은 본 표본에서 미검출**
   ("No additional collisions were prevented by the explicit cap in the
   tested sample" — 동등성 주장 아님)
-- Wilson 95% CI: 7/10→39.7–89.2%, 1/10→0.2–44.5%, 3/10→10.8–60.3%, 4/10→16.8–68.7%
+- Wilson 95% CI: 7/10→39.7–89.2%, 0/10→0.0–27.8%, 3/10→10.8–60.3%, 4/10→16.8–68.7%
 
 ## 2체제 종합 (본 캠페인 + 재실험 데이터 결합)
 
