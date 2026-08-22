@@ -1,0 +1,7 @@
+idx,method,fault,severity,trigger_s,npc,rep,outcome,final_state,aw_mrm,stop_x,stop_y,lane_overlap_m,lane_block_pct,det_latency_s,tts_fault_s,deg_dist_m,min_gap_m,traffic,time_to_stop_s,collisions,collision_types,stall_factor,t_hazard_s,wall_s,obs_hard_decel,obs_pass_events,obs_min_pass_gap_m,obs_min_ttc_s,obs_npc_seen,obs_window_s
+0,baseline,gm,mid,39,none,11,AW_COMFORTABLE_STOP_DONE,MRM_DEFER,COMFORTABLE_STOP,-2.1,-17.1,1.9,54.3,1.4,-12.2,0.0,,,,,,,,111.6,,,,,,
+1,baseline,gm,mid,18,def,1,AW_COMFORTABLE_STOP_DONE,MRM_DEFER,COMFORTABLE_STOP,-2.1,-17.1,1.9,54.3,1.6,2.9,9.1,7.2,blocked,,,,,,104.2,,,,,,
+2,baseline,gm,high,15,none,6,CARLA_DIED,NORMAL,,7.6,-59.3,1.9,54.3,,,,,,,,,,,72.6,,,,,,
+3,baseline,gm,high,36,none,9,AW_COMFORTABLE_STOP_DONE,MRM_DEFER,COMFORTABLE_STOP,-2.1,-17.2,1.9,54.3,1.1,-10.2,0.1,,,,,,,,109.3,,,,,,
+4,baseline,gm,high,16,def,0,AW_COMFORTABLE_STOP_DONE,MRM_DEFER,COMFORTABLE_STOP,-2.1,-20.0,1.9,54.3,1.3,3.6,13.5,21.0,cleared,,,,,,103.3,,,,,,
+5,baseline,gm,high,14,def,7,AW_COMFORTABLE_STOP_DONE,MRM_DEFER,COMFORTABLE_STOP,-2.3,-27.2,1.9,54.3,1.3,4.2,15.4,7.5,blocked,,,,,,102.0,,,,,,

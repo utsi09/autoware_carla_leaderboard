@@ -1,0 +1,12 @@
+idx,method,fault,severity,trigger_s,npc,rep,outcome,final_state,aw_mrm,stop_x,stop_y,lane_overlap_m,lane_block_pct,det_latency_s,tts_fault_s,deg_dist_m,min_gap_m,traffic,time_to_stop_s,collisions,collision_types,stall_factor,t_hazard_s,wall_s,obs_hard_decel,obs_pass_events,obs_min_pass_gap_m,obs_min_ttc_s,obs_npc_seen,obs_window_s
+0,ours,gn,mid,27,def,0,SCENARIO_ENDED,,,nan,nan,,,,,,,,,,,,,68.8,,,,,,
+1,ours,gn,mid,40,def,1,SCENARI1,ours,gn,mid,40,def,1,SCENARIO_ENDED,NORMA2,ours,gn,mid,23,def,2,SCENARIO_ENDED,,,nan,nan,,,,,,,,,,,,,189.8,,,,,,
+3,ours,gn,mid,30,def,3,SCENARIO_ENDED,,,nan,nan,,,,,,,,,,,,,184.8,,,,,,
+4,ours,gn,mid,13,def,4,DEFER_STOPPED(log),,,nan,nan,,,,,,,,,0,,,,124.8,,,,,,
+5,ours,gn,mid,38,def,5,SETUP_FAIL,ego odometry never appeared,,,,,,,,,,,,,,,,236.3,,,,,,
+6,ours,gn,mid,24,def,6,SCENARIO_ENDED,,,nan,nan,,,,,,,,,,,,5,ours,gn,mid7,ours,gn,mid,11,def,7,SCENARIO_ENDED,,,nan,nan,,,,,,,,,,,,,200.7,,,,,,
+8,ours,gn,mid,22,def,8,DEFER_STOPPED(log),,,nan,nan,,,,,,,,,0,,,,127.4,,,,,,
+9,ours,gn,mid,10,def,9,SETUP_FAIL,ego odometry never appeared,,,,,,,,,,,,,,,,314.9,,,,,,
+P,27.9,-60.0,1.9,54.3,,,,,,,0,,,,123.4,,,,,,
+8,ours,gn,mid,22,def,8,SETUP_FAIL,ego odometry never appeared,,,,,,,,,,,,,,,,222.8,,,,,,
+9,ours,gn,mid,10,def,9,SCENARIO_ENDED,NORMAL,EMERGENCY_STOP,27.9,-60.0,1.9,54.3,,,,,,,,,,,68.8,,,,,,

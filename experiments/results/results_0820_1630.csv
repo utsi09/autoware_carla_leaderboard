@@ -1,0 +1,2 @@
+idx,method,fault,severity,trigger_s,npc,rep,outcome,final_state,aw_mrm,stop_x,stop_y,lane_overlap_m,lane_block_pct,det_latency_s,tts_fault_s,deg_dist_m,min_gap_m,traffic,time_to_stop_s,collisions,collision_types,stall_factor,t_hazard_s,wall_s,obs_hard_decel,obs_pass_events,obs_min_pass_gap_m,obs_min_ttc_s,obs_npc_seen,obs_window_s
+0,ours,imd,mid,40,def,0,AW_EMERGENCY_STOP_DONE,MRM_DEFER:shoulder_1002507,EMERGENCY_STOP,-2.0,-16.7,1.9,54.3,15.9,28.6,2.5,7.4,blocked,12.7,,,,,147.9,,,,,,

@@ -1,0 +1,2 @@
+idx,method,fault,severity,trigger_s,npc,rep,outcome,final_state,aw_mrm,stop_x,stop_y,lane_overlap_m,lane_block_pct,det_latency_s,tts_fault_s,deg_dist_m,min_gap_m,traffic,time_to_stop_s,collisions,collision_types,stall_factor,t_hazard_s,wall_s,obs_hard_decel,obs_pass_events,obs_min_pass_gap_m,obs_min_ttc_s,obs_npc_seen,obs_window_s
+0,ours,gn,mid,27,none,0,SHOULDER_SUCCESS,MRM_PARKED:shoulder_1002337,,-176.4,38.1,0.95,29.0,1.4,50.4,203.5,36.2,,49.0,,,,,151.2,,,,,,

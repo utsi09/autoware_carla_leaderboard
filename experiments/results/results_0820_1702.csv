@@ -1,0 +1,7 @@
+idx,method,fault,severity,trigger_s,npc,rep,outcome,final_state,aw_mrm,stop_x,stop_y,lane_overlap_m,lane_block_pct,det_latency_s,tts_fault_s,deg_dist_m,min_gap_m,traffic,time_to_stop_s,collisions,collision_types,stall_factor,t_hazard_s,wall_s,obs_hard_decel,obs_pass_events,obs_min_pass_gap_m,obs_min_ttc_s,obs_npc_seen,obs_window_s
+0,ours,imd,mid,31,def,0,AW_EMERGENCY_STOP_DONE,MRM_DEFER:shoulder_1002507,EMERGENCY_STOP,-2.0,-16.4,1.9,54.3,8.1,9.5,2.6,7.5,blocked,1.4,,,,,136.8,,,,,,
+1,ours,imd,mid,24,def,1,AW_EMERGENCY_STOP_DONE,MRM_DEFER:shoulder_1002507,EMERGENCY_STOP,-3.0,-16.9,1.82,52.0,15.0,19.4,1.8,6.5,blocked,4.4,,,,,125.5,,,,,,
+2,ours,imd,mid,23,def,2,AW_EMERGENCY_STOP_DONE,MRM_DEFER,EMERGENCY_STOP,-2.2,-16.8,1.9,54.3,12.5,9.8,1.7,3.7,cleared,,,,,,115.5,,,,,,
+3,ours,imd,high,19,def,0,AW_EMERGENCY_STOP_DONE,MRM_DEFER,EMERGENCY_STOP,-2.1,-17.2,1.9,54.3,9.0,4.5,6.1,19.0,cleared,,,,,,106.3,,,,,,
+4,ours,imd,high,35,def,1,AW_EMERGENCY_STOP_DONE,MRM_DEFER:shoulder_1002507,EMERGENCY_STOP,-2.0,-17.1,1.9,54.3,5.3,-10.4,0.6,3.8,cleared,-15.7,,,,,118.6,,,,,,
+5,ours,imd,high,29,def,2,AW_EMERGENCY_STOP_DONE,MRM_DEFER:shoulder_1002507,EMERGENCY_STOP,-2.0,-17.4,1.9,54.3,4.9,-5.9,0.5,3.9,cleared,-10.8,,,,,116.8,,,,,,

@@ -1,0 +1,2 @@
+idx,method,fault,severity,trigger_s,npc,rep,outcome,final_state,aw_mrm,stop_x,stop_y,lane_overlap_m,lane_block_pct,det_latency_s,tts_fault_s,deg_dist_m,min_gap_m,traffic,time_to_stop_s,collisions,collision_types,stall_factor,t_hazard_s,wall_s,obs_hard_decel,obs_pass_events,obs_min_pass_gap_m,obs_min_ttc_s,obs_npc_seen,obs_window_s
+0,baseline,gn,mid,25,none,0,AW_COMFORTABLE_STOP_DONE,MRM_DEFER,COMFORTABLE_STOP,-3.0,-2.0,1.9,54.7,0.8,3.5,9.0,7.5,blocked,,,,,,109.9,,,,,,
