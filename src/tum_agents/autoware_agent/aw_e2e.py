@@ -482,6 +482,11 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                     world = CarlaDataProvider.get_world()
                     killed = 0
                     for s in world.get_actors().filter('sensor.camera.rgb'):
+                        # stop() 먼저: destroy는 서버측 적용이 지연돼 ~1.2 s
+                        # 유령 프레임이 남는다(0822 원장 실측) — 실제 센서 사망은
+                        # 즉시 침묵이므로 스트림부터 끊는다
+                        try: s.stop()
+                        except Exception: pass
                         s.destroy(); killed += 1
                     print(f"[FAULT INJECTION] destroyed {killed} camera sensor(s) at t+{fault_camera_delay:.0f}s")
                 except Exception as e:
@@ -641,6 +646,8 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                         tag = (s.attributes.get("role_name", "")
                                + s.attributes.get("ros_name", "")).lower()
                         if "front" in tag:
+                            try: s.stop()
+                            except Exception: pass
                             s.destroy(); killed += 1
                     print(f"[FAULT INJECTION] destroyed {killed} front lidar(s) at t+{spec[0]:.0f}s")
                 except Exception as e:
@@ -936,6 +943,16 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                 or self._rain_applied or self._gnss_blackout):
             self._fault_announced = True
             self._fault_active_pub.publish(Bool(data=True))
+            # [0823] 고장 활성화 심시간 원장 — 저지 실명과 무관하게 지연 산출 가능
+            try:
+                _t = self._aw_time
+                _sim = _t.sec + _t.nanosec * 1e-9 if _t is not None else -1.0
+                import time as _tm
+                with open("/home/taewook/autoware_carla_leaderboard/experiments/"
+                          "results/fault_ledger.log", "a") as _f:
+                    _f.write(f"{_tm.time():.3f} FAULT_ACTIVE sim={_sim:.3f}\n")
+            except Exception:
+                pass
             print(f"[FAULT INJECTION] fault ACTIVE at t+{fault_elapsed:.1f}s (announced)")
 
         # Autoware Timing

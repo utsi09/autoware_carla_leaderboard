@@ -480,6 +480,9 @@ class Judge:
         self.aw_state = 0              # MrmState.state from mrm_handler
         self.aw_behaviors = []         # behavior names in first-seen order
         self.fault_time = None         # wall time the fault went live
+        self.fault_time_sim = None     # sim time (/clock) the fault went live
+        self.state_times_sim = {}      # state -> first-seen sim time
+        self.sim_now = None            # latest /clock [s]
         self.deg_dist = 0.0            # meters driven after the fault
         self.min_gap = None            # nearest obstacle while stationary post-fault
         self._last_xy = None
@@ -504,18 +507,26 @@ class Judge:
             OperationModeState, "/api/operation_mode/state", self._op_cb,
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         from std_msgs.msg import Bool, Float64
+        from rosgraph_msgs.msg import Clock
         self.node.create_subscription(
             Bool, "/fault_injection/active", self._fault_cb,
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.node.create_subscription(
             Float64, "/monitor/nearest_obstacle_m", self._gap_cb, 10)
+        # [0822] 심시간 지연 측정: destroy 히치 동안 /clock이 멈추므로
+        # 벽시계 지연은 히치를 포함해 과대측정된다 — 안전 지연은 심시간 병기
+        self.node.create_subscription(Clock, "/clock", self._clock_cb, 10)
 
         self._spin = threading.Thread(target=self._spin_loop, daemon=True)
         self._spin.start()
 
+    def _clock_cb(self, msg):
+        self.sim_now = msg.clock.sec + msg.clock.nanosec * 1e-9
+
     def _fault_cb(self, msg):
         if msg.data and self.fault_time is None:
             self.fault_time = time.time()
+            self.fault_time_sim = self.sim_now
             print("[judge] fault active")
 
     def _gap_cb(self, msg):
@@ -550,6 +561,8 @@ class Judge:
         if msg.data != self.state:
             self.state = msg.data
             self.state_times.setdefault(msg.data, time.time())
+            if self.sim_now is not None:
+                self.state_times_sim.setdefault(msg.data, self.sim_now)
             print(f"[judge] supervisor state: {msg.data}")
 
     AW_BEHAVIOR_NAMES = {2: "EMERGENCY_STOP", 3: "COMFORTABLE_STOP", 4: "PULL_OVER"}
@@ -765,17 +778,22 @@ class Judge:
                       if s_.startswith("MRM_MOVE")), default=None)
         t_end = self.stopped_since or time.time()
         tts = (t_end - t_move) if t_move else float("nan")
-        det, tts_fault = "", ""
+        det, tts_fault, det_sim = "", "", ""
         if self.fault_time is not None:
             mrm_ts = [t for s_, t in self.state_times.items()
                       if s_.startswith("MRM_") and t >= self.fault_time - 1.0]
             if mrm_ts:
                 det = round(min(mrm_ts) - self.fault_time, 1)
+            if self.fault_time_sim is not None:
+                mrm_sim = [t for s_, t in self.state_times_sim.items()
+                           if s_.startswith("MRM_") and t >= self.fault_time_sim - 1.0]
+                if mrm_sim:
+                    det_sim = round(min(mrm_sim) - self.fault_time_sim, 2)
             if self.stationary_since is not None:
                 tts_fault = round(self.stationary_since - self.fault_time, 1)
         return {"final_state": self.state, "x": round(px, 1), "y": round(py, 1),
                 "time_to_stop_s": round(tts, 1) if not math.isnan(tts) else "",
-                "det_latency_s": det, "tts_fault_s": tts_fault,
+                "det_latency_s": det, "det_latency_sim_s": det_sim, "tts_fault_s": tts_fault,
                 "deg_dist_m": round(self.deg_dist, 1) if self.fault_time else "",
                 "min_gap_m": round(self.min_gap, 1) if self.min_gap is not None else "",
                 "traffic": self.traffic,
@@ -791,6 +809,7 @@ class Judge:
     def reset(self):
         self.state = ""
         self.state_times.clear()
+        self.state_times_sim.clear()
         self.pose = None
         self.speed = None
         self.stopped_since = None
@@ -800,6 +819,7 @@ class Judge:
         self.aw_behaviors = []
         self.op_mode = None
         self.fault_time = None
+        self.fault_time_sim = None
         self.deg_dist = 0.0
         self.min_gap = None
         self._last_xy = None
@@ -944,7 +964,7 @@ def run(args):
         wr.writerow(["idx", "method", "fault", "severity", "trigger_s", "npc", "rep",
                      "outcome", "final_state", "aw_mrm", "stop_x", "stop_y",
                      "lane_overlap_m", "lane_block_pct",
-                     "det_latency_s", "tts_fault_s", "deg_dist_m", "min_gap_m", "traffic",
+                     "det_latency_s", "det_latency_sim_s", "tts_fault_s", "deg_dist_m", "min_gap_m", "traffic",
                      "time_to_stop_s", "collisions", "collision_types",
                      "stall_factor", "t_hazard_s", "wall_s",
                      "obs_hard_decel", "obs_pass_events", "obs_min_pass_gap_m",
@@ -1078,7 +1098,7 @@ def run(args):
                    case["npc"], case["rep"],
                    outcome, detail.get("final_state", ""), detail.get("aw_mrm", ""),
                    sx, sy, ov, pct,
-                   detail.get("det_latency_s", ""), detail.get("tts_fault_s", ""),
+                   detail.get("det_latency_s", ""), detail.get("det_latency_sim_s", ""), detail.get("tts_fault_s", ""),
                    detail.get("deg_dist_m", ""), detail.get("min_gap_m", ""),
                    detail.get("traffic", ""),
                    detail.get("time_to_stop_s", ""),
