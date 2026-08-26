@@ -1519,7 +1519,7 @@
     "i": -1,
     "kind": "fig",
     "fields": [
-     "Figure 5-2. Continuous health traces — band separation of the state-transition input (perception capability) score: (a) LiDAR soiling (lso), (b) camera pixel noise (cn), with the dual thresholds 0.7/0.3. One representative run per condition; warm-up and end-of-run stale artifacts are trimmed. The navigation family (gn, imn) is out of scope here by design — its decision variables come from residual detectors inside the supervisor, not from /monitor/scores.",
+     "Figure 5-2. Continuous health traces — band separation of the state-transition input (perception capability) score: (a) LiDAR soiling (lso), (b) camera pixel noise (cn), with the dual thresholds 0.7/0.3. One representative run per condition; warm-up and end-of-run stale artifacts are trimmed. The navigation family (gn, imn) is out of scope here by design — its decision variables come from residual detectors inside the supervisor, not from /monitor/scores. Vertical dotted lines mark fault onset, detected as the step drop of the affected sensor's raw score (not shown for lso-mid, whose step is buried in quality-metric variation — consistent with its tolerated grade).",
      "fig5_2ht",
      "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig12_health.png",
      null,
