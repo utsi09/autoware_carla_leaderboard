@@ -15,12 +15,15 @@ if pgrep -f "experiment_runner[.]py" > /dev/null; then
   echo "runner already active — abort" | tee -a $LOG; exit 1
 fi
 
-band() { case $1 in 4.2) echo "3.9x4.45";; 3.6) echo "3.5x3.7";; 3.0) echo "2.9x3.1";; esac; }
+# 밴드 하한 = 캡-0.35: 속도 스무서가 외부 제한보다 ~0.2 낮게 추종하는 실측
+# (D00 스모크: 캡 3.0 지속 구간 2.77) 반영. 세 밴드는 서로소 유지.
+band() { case $1 in 4.2) echo "3.85x4.45";; 3.6) echo "3.25x3.75";; 3.0) echo "2.65x3.15";; esac; }
 
 run_one() {  # SEED WS JIT FSEED WSEED CAP DIST
   local SEED=$1 WS=$2 JIT=$3 FSEED=$4 WSEED=$5 CAP=$6 D=$7
   local TAG=sd-${SEED}-c${CAP/./}-d${D}
-  grep -q "^${TAG},.*,1," $PROG && return 0          # 이미 채택
+  # 이미 채택(6열 adopted==1 — 정규식 ",1,"은 attempt 열과 오매칭했음)
+  awk -F, -v t="$TAG" '$1==t && $6==1 {found=1} END{exit !found}' $PROG && return 0
   local A; A=$(grep -c "^${TAG}," $PROG)
   [ "$A" -ge 3 ] && { echo "$TAG retries exhausted" | tee -a $LOG; return 0; }
   local FREE; FREE=$(df --output=avail -BG / | tail -1 | tr -dc 0-9)
@@ -40,7 +43,7 @@ run_one() {  # SEED WS JIT FSEED WSEED CAP DIST
     V1=$(awk -F, 'NR==2{print $8}' "$TICK")
     OK=$(python3 -c "
 import sys
-b={'4.2':(3.9,4.45),'3.6':(3.5,3.7),'3.0':(2.9,3.1)}['$CAP']
+b={'4.2':(3.85,4.45),'3.6':(3.25,3.75),'3.0':(2.65,3.15)}['$CAP']
 try: v=float('$V1')
 except Exception: print(0); raise SystemExit
 print(1 if b[0]-0.15<=v<=b[1]+0.15 else 0)")
@@ -62,6 +65,12 @@ if [ "$1" = "dev" ]; then                   # D00 스모크: 본 분석 제외
   run_one D00 3.0 0.0 999 1999 3.0 8
   run_one D00 3.0 0.0 999 1999 3.6 7
   echo "SPEED_DOSE_DEV_DONE" | tee -a $LOG; exit 0
+fi
+if [ "$1" = "dev2" ]; then                  # D01: 캡 재발행 패치 검증 (본 분석 제외)
+  run_one D01 3.0 0.0 998 1998 3.0 8
+  run_one D01 3.0 0.0 998 1998 3.6 7
+  run_one D01 3.0 0.0 998 1998 4.2 8
+  echo "SPEED_DOSE_DEV2_DONE" | tee -a $LOG; exit 0
 fi
 
 mapfile -t ROWS < <(tail -n +2 experiments/seeds_speed_dose.csv)
