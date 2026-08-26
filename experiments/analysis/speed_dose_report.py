@@ -34,6 +34,15 @@ def mcnemar_exact(b, c):
     return min(1.0, 2 * cum)
 
 def load():
+    # [0827] 1차 진실원 = 에고 RAW-HIT 원장 (collision_live.log, v4.9v 규약).
+    # 워커측 CONTACT-PHYSICS는 루프 지연 거짓양성 이력 — 보조 신호로만.
+    raw = {}
+    with open(f'{R}/collision_live.log') as f:
+        for ln in f:
+            p = ln.split()
+            if len(p) >= 4 and p[1].startswith('sd-') and p[2] == 'RAW-HIT' \
+                    and 'walker' in p[3]:
+                raw[p[1]] = raw.get(p[1], 0) + 1
     # 태그별 마지막 원장 행
     led = OrderedDict()
     with open(f'{R}/encounter_metrics.csv') as f:
@@ -55,15 +64,16 @@ def load():
             continue                # 개발 시드 제외 (사전등록)
         pr = prog.get(tag, {})
         adopted = pr.get('adopted') == '1'
+        hits = raw.get(tag, 0)
         if contact == 'NO-ENCOUNTER' or not adopted:
             verdict = 'INVALID'
-        elif contact.startswith('CONTACT'):
-            verdict = 'COLLIDE'
+        elif hits > 0:
+            verdict = 'COLLIDE'          # 에고 RAW-HIT가 1차 판정
         else:
             verdict = 'AVOID'
         out[(seed, cap, dist)] = dict(verdict=verdict, min_gap=mg,
                                       first_v=pr.get('first_v', ''),
-                                      contact=contact)
+                                      contact=contact, hits=hits)
     return out
 
 def main():
@@ -99,7 +109,9 @@ def main():
             n11 += 1
         else:
             n00 += 1
-        print(f'  {s}: 4.2={v1:8s} 3.0={v3}')
+        h1 = d.get((s, '4.2', '8'), {}).get('hits', 0)
+        h3 = d.get((s, '3.0', '8'), {}).get('hits', 0)
+        print(f'  {s}: 4.2={v1:8s}(hit {h1:3d}f) 3.0={v3}(hit {h3:3d}f)')
     print(f'불일치 4.2충돌/3.0회피 b={b}, 4.2회피/3.0충돌 c={c}, '
           f'둘다충돌 {n11}, 둘다회피 {n00}')
     print(f'exact McNemar 양측 p = {mcnemar_exact(b, c):.4g}')

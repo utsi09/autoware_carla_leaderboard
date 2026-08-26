@@ -762,14 +762,23 @@ def main():
                 _wv = ped.get_velocity()
                 _wspd = math.hypot(_wv.x, _wv.y)
                 _lastwp = globals().get("_lastwp")
+                # [sd 0827] jump를 시간 정규화 — 녹화 저장 지연으로 루프 주기가
+                # 1.7 s+로 늘면 보행 이동(3 m/s)만으로 5 m를 넘겨 거짓양성
+                # (D02-c30 실측: 틱 min_gap 0.86인데 CONTACT-PHYSICS 기록).
+                # 판정은 변위가 아니라 '내재 속도 > 4.5 m/s'로 통일.
+                _nowj = time.time()
+                _dtj = (_nowj - _lastwp[2]) if (_lastwp and len(_lastwp) > 2) \
+                    else 1.0
                 _jump = (math.hypot(_pnow.x - _lastwp[0], _pnow.y - _lastwp[1])
                          if _lastwp else 0.0)
-                globals()["_lastwp"] = (_pnow.x, _pnow.y)
-                if (_wspd > 4.5 or _jump > 5.0) and not _collision["hit"]:
+                _jspd = _jump / max(_dtj, 0.2)
+                globals()["_lastwp"] = (_pnow.x, _pnow.y, _nowj)
+                if (_wspd > 4.5 or _jspd > 4.5) and not _collision["hit"]:
                     _collision["hit"] = True
                     _collision["with"] = "physics"
                     print(f"[hazard] CONTACT-PHYSICS wspd={_wspd:.1f} "
-                          f"jump={_jump:.1f}m", flush=True)
+                          f"jump={_jump:.1f}m/{_dtj:.1f}s={_jspd:.1f}m/s",
+                          flush=True)
                     import os as _o
                     with open("/home/taewook/autoware_carla_leaderboard/"
                               "experiments/results/encounter_metrics.csv",
