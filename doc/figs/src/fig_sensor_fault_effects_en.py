@@ -47,8 +47,8 @@ def bev(ax, p, clut=None, title=""):
     ax.set_title(f"{title}\n({len(p):,} pts)", fontsize=7)
     ax.tick_params(labelsize=5.5); ax.grid(alpha=0.2)
 
-fig = plt.figure(figsize=(6.4, 10.6))
-gs = fig.add_gridspec(5, 3, hspace=0.55, wspace=0.3)
+fig = plt.figure(figsize=(6.4, 12.4))
+gs = fig.add_gridspec(6, 3, hspace=0.6, wspace=0.3)
 
 for j, (T, w, t) in enumerate([(1.0, 0, 'nominal'), (0.33, 90, 'lso-mid (T=0.33, 90°)'),
                                (0.07, 150, 'lso-high (T=0.07, 150°)')]):
@@ -88,12 +88,12 @@ ax = fig.add_subplot(gs[3, 1])
 ax.plot(t_, gm, lw=0.9, color='black')
 wave(ax, 'gb — correlated bias (σ=3 m, τ=30 s)', None)
 ax = fig.add_subplot(gs[3, 2])
-T_OFF = 40.0
-ax.step([0, T_OFF, 120], [1, 0, 0], where='post', lw=1.2, color='black')
-ax.axvspan(T_OFF, 120, color='0.85', zorder=0)
-ax.text((T_OFF + 120) / 2, 0.5, 'no fix', ha='center', fontsize=6.5)
-ax.set_ylim(-0.1, 1.25); ax.set_yticks([0, 1]); ax.set_yticklabels(['off', 'on'], fontsize=5.5)
-wave(ax, 'gf — GNSS blackout (no fix after onset)', None)
+T_ON = 5.0
+ax.vlines(np.arange(0, T_ON, 0.1), 0.15, 0.85, lw=0.6, color='black')
+ax.axvspan(T_ON, 10, color='0.9', zorder=0)
+ax.text((T_ON + 10) / 2, 0.5, 'no fix', ha='center', fontsize=6.5)
+ax.set_xlim(0, 10); ax.set_ylim(0, 1); ax.set_yticks([])
+wave(ax, 'gf — GNSS blackout (10 Hz fixes cease)', None)
 
 # row (e-cont.): gyro family — white noise / fixed bias / bias ramp
 ax = fig.add_subplot(gs[4, 0])
@@ -108,6 +108,23 @@ ax = fig.add_subplot(gs[4, 2])
 ax.plot(t_, 0.005 * t_, lw=1.2, color='black')
 ax.set_ylim(0, 0.65)
 wave(ax, 'imd — bias ramp (0.005 rad/s²)', None)
+
+# row (f): dead sensors — message streams fall silent (hard-fail fast path)
+ax = fig.add_subplot(gs[5, :])
+for y, rate in [(1.0, 20.0), (0.0, 10.0)]:
+    ax.vlines(np.arange(0, T_ON, 1.0 / rate), y + 0.1, y + 0.7, lw=0.6, color='black')
+ax.axvspan(T_ON, 10, color='0.9', zorder=0)
+ax.text((T_ON + 10) / 2, 1.62, 'sensor silence (dead sensor)', ha='center', fontsize=7)
+ax.annotate('silence > freshness deadline (1.0 s) → hard-fail fast path',
+            xy=(T_ON + 1.0, 0.4), xytext=(T_ON + 1.9, 0.4), fontsize=6.8,
+            va='center', arrowprops=dict(arrowstyle='->', lw=0.8))
+ax.set_xlim(0, 10); ax.set_ylim(-0.15, 1.9)
+ax.set_yticks([0.4, 1.4])
+ax.set_yticklabels(['lf — LiDAR\nscans (10 Hz)', 'cf — camera\nframes (20 Hz)'], fontsize=6.5)
+ax.set_title('cf / lf — sensor stream freeze (topic silence after onset)', fontsize=7)
+ax.tick_params(labelsize=5.5); ax.set_xlabel('time [s]', fontsize=6.5)
+ax.set_ylabel('(e) dead sensors', fontsize=7, labelpad=18)
+st.clean_axes(ax)
 
 plt.savefig(OUT); plt.close()
 print('saved')
