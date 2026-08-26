@@ -86,12 +86,22 @@ def equation(doc, text, num):
     style_run(p.add_run('\t' + num), size=11)
 
 # 한 쪽을 초과하는 큰 표는 강제 새 쪽 시작 대신 자연 분할을 허용(머리행 반복)
+def caption_para(doc, caption):
+    p = doc.add_paragraph()
+    pf = p.paragraph_format
+    pf.line_spacing = 1.3
+    pf.space_before = Pt(2); pf.space_after = Pt(0)
+    head, sep, rest = caption.partition('. ')
+    style_run(p.add_run(head + sep), size=9.5, bold=True)
+    if rest:
+        style_run(p.add_run(rest), size=9.5)
+    return p
+
 ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0'}
 
 def add_table(doc, caption, key, rows, note):
     keys[key] = caption.split('. ')[0]
-    cap = para(doc, caption, size=10, bold=False)
-    cap.paragraph_format.line_spacing = 1.5
+    cap = caption_para(doc, caption)
     cap.paragraph_format.keep_with_next = True
     t = doc.add_table(rows=len(rows), cols=len(rows[0]))
     t.style = 'Table Grid'
@@ -138,8 +148,7 @@ def add_figure(doc, caption, key, path, note, width_cm=None):
         p.paragraph_format.keep_with_next = True  # 그림-캡션 분리 방지
         r = p.add_run()
         r.add_picture(path, width=Cm(width_cm if width_cm else 14.5))
-    cap = para(doc, caption, size=10)
-    cap.paragraph_format.line_spacing = 1.5
+    cap = caption_para(doc, caption)
     cap.paragraph_format.keep_together = True  # 캡션 쪽 넘김 분할 방지
     if note:
         n = para(doc, note, size=9.5)

@@ -85,12 +85,22 @@ def equation(doc, text, num):
     style_run(p.add_run(text), size=11)
     style_run(p.add_run('\t' + num), size=11)
 
+def caption_para(doc, caption):
+    p = doc.add_paragraph()
+    pf = p.paragraph_format
+    pf.line_spacing = 1.3
+    pf.space_before = Pt(2); pf.space_after = Pt(0)
+    head, sep, rest = caption.partition('. ')
+    style_run(p.add_run(head + sep), size=9.5, bold=True)
+    if rest:
+        style_run(p.add_run(rest), size=9.5)
+    return p
+
 ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0', 'tbl4_3'}
 
 def add_table(doc, caption, key, rows, note):
     keys[key] = caption.split('. ')[0]
-    cap = para(doc, caption, size=10)
-    cap.paragraph_format.line_spacing = 1.5
+    cap = caption_para(doc, caption)
     cap.paragraph_format.keep_with_next = True
     t = doc.add_table(rows=len(rows), cols=len(rows[0]))
     t.style = 'Table Grid'
@@ -134,8 +144,7 @@ def add_figure(doc, caption, key, path, note, width_cm=None):
         p.paragraph_format.line_spacing = 1.0
         p.paragraph_format.keep_with_next = True
         p.add_run().add_picture(path, width=Cm(width_cm if width_cm else 14.5))
-    cap = para(doc, caption, size=10)
-    cap.paragraph_format.line_spacing = 1.5
+    cap = caption_para(doc, caption)
     cap.paragraph_format.keep_together = True
     if note:
         n = para(doc, note, size=9.5)
