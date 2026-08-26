@@ -42,7 +42,7 @@ def nf_band(ch):
     return vs[int(len(vs) * 0.05)], vs[int(len(vs) * 0.95)]
 
 PANELS = [
-    ('(a) LiDAR soiling (lso)', 'sensor/LIDAR_front',
+    ('(a) LiDAR sparsification (lso)', 'sensor/LIDAR_front',
      [('scoretrace_lso_mid.csv', 'mid (tolerated)', figstyle.C_MID),
       ('scoretrace_lso_high.csv', 'high (intervention)', figstyle.C_HIGH)]),
     ('(b) camera pixel noise (cn)', 'sensor/CAMERA_front',

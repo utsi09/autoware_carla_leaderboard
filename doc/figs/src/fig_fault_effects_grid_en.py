@@ -109,7 +109,7 @@ axes[2][1].set_xlabel('x [m]', fontsize=5.2, labelpad=1)
 axes[1][0].set_ylabel('y [m]', fontsize=5.4, labelpad=1)
 
 # 열 헤더
-HEADS = ['(a) LiDAR soiling (lso)', '(b) LiDAR clutter (lcl)', '(c) camera noise (cn)',
+HEADS = ['(a) LiDAR sparsification (lso)', '(b) LiDAR clutter (lcl)', '(c) camera noise (cn)',
          '(d) GNSS faults', '(e) gyro faults']
 for ci, h in enumerate(HEADS):
     pos = axes[0][ci].get_position()

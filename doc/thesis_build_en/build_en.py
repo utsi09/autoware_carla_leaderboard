@@ -85,11 +85,11 @@ def equation(doc, text, num):
     style_run(p.add_run(text), size=11)
     style_run(p.add_run('\t' + num), size=11)
 
-ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0'}
+ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0', 'tbl4_3'}
 
 def add_table(doc, caption, key, rows, note):
     keys[key] = caption.split('. ')[0]
-    cap = para(doc, caption, size=11)
+    cap = para(doc, caption, size=10)
     cap.paragraph_format.line_spacing = 1.5
     cap.paragraph_format.keep_with_next = True
     t = doc.add_table(rows=len(rows), cols=len(rows[0]))
@@ -134,7 +134,7 @@ def add_figure(doc, caption, key, path, note, width_cm=None):
         p.paragraph_format.line_spacing = 1.0
         p.paragraph_format.keep_with_next = True
         p.add_run().add_picture(path, width=Cm(width_cm if width_cm else 14.5))
-    cap = para(doc, caption, size=11)
+    cap = para(doc, caption, size=10)
     cap.paragraph_format.line_spacing = 1.5
     cap.paragraph_format.keep_together = True
     if note:
@@ -274,7 +274,7 @@ for b in ALL_BLOCKS:
     elif b[0] == 'sec':
         toc_line(doc, b[1], pagemap.get(b[2], ''), indent=1.0)
 toc_line(doc, 'References', pagemap.get('refs', ''))
-toc_line(doc, '논문요약 (Korean Abstract)', pagemap.get('kosum', ''))
+toc_line(doc, '논문요약', pagemap.get('kosum', ''))
 
 para(doc, 'List of Tables', size=14, bold=True, align=CENTER, page_break=True)
 para(doc)
@@ -355,6 +355,10 @@ para(doc, '논문요약', size=14, bold=True, page_break=True)
 para(doc)
 para(doc, TITLE_KO_L1 + ' ' + TITLE_KO_L2, size=16, bold=True, align=CENTER, spacing=1.5)
 para(doc, TITLE_KO_L3, size=16, bold=True, align=CENTER, spacing=1.5)
+para(doc)
+para(doc, '○ ○ ○', size=11, align=RIGHT, spacing=1.5)
+para(doc, '성균관대학교 일반대학원', size=11, align=RIGHT, spacing=1.5)
+para(doc, '전자전기컴퓨터공학과', size=11, align=RIGHT, spacing=1.5)
 para(doc)
 for t in SUMMARY_KO:
     body_para(doc, t)
