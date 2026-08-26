@@ -63,6 +63,10 @@ for ax, (title, channel, series) in zip(axes, PANELS):
             if t_inj is not None:
                 ax.axvline(t_inj, color=color, lw=0.9, ls=(0, (2, 2)), alpha=0.65)
                 onsets.append(t_inj)
+            if onset_ch == 'sensor/CAMERA_front':
+                rx, ry = series_pts(fname, onset_ch)
+                ax.plot(rx, ry, color=color, lw=0.8, ls=(0, (1.5, 1.5)),
+                        alpha=0.5, solid_joinstyle='round')
     if onsets:
         ax.text(max(onsets) + 4, 1.035, 'fault onset', fontsize=7,
                 color='#5a6170', ha='left', va='top')
@@ -77,7 +81,11 @@ axes[0].set_ylabel('perception capability score', fontsize=8.5)
 axes[0].text(24, 0.72, r'$\theta_H$', fontsize=8, color='#3a3f4c', va='bottom')
 axes[0].text(24, 0.32, r'$\theta_L$', fontsize=8, color='#3a3f4c', va='bottom')
 axes[0].legend(loc='lower right', frameon=False, fontsize=7)
-axes[1].legend(loc='lower right', frameon=False, fontsize=7)
+from matplotlib.lines import Line2D as _L2
+h1, l1 = axes[1].get_legend_handles_labels()
+h1.append(_L2([], [], color='#5a6170', lw=0.8, ls=(0, (1.5, 1.5)), alpha=0.7))
+l1.append('camera raw score')
+axes[1].legend(h1, l1, loc='lower right', frameon=False, fontsize=7)
 fig.tight_layout()
 fig.savefig(OUT, bbox_inches='tight', pad_inches=0.05)
 print('saved')
