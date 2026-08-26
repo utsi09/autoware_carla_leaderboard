@@ -498,6 +498,8 @@ def main():
             _lo, _hi = _settle_band
             _band_since = None
             _lastbc2 = 0.0
+            _vhist = []          # (t, v) 최근 1.05 s — 정착=밴드+안정 판정
+            _prevp = None        # (t, pos) 진행방향 추정용
             t_wait0 = time.time()
             while not fired and time.time() - t_wait0 < 420.0:
                 (pos, v) = ros_ego()
@@ -514,30 +516,72 @@ def main():
                     time.sleep(0.2)
                     continue
                 _st = _ros.get("sup_state", "")
+                _now = time.time()
+                _vhist.append((_now, v))
+                _vhist = [(t2, v2) for t2, v2 in _vhist if _now - t2 <= 1.05]
+                if _prevp is None or math.hypot(pos[0] - _prevp[1][0],
+                                                pos[1] - _prevp[1][1]) > 0.5:
+                    _hdg_from = _prevp[1] if _prevp else None
+                    _prevp = (_now, pos)
+                else:
+                    _hdg_from = None
+                if _hdg_from is not None:
+                    globals()["_last_hdg"] = (pos[0] - _hdg_from[0],
+                                              pos[1] - _hdg_from[1])
                 if time.time() - _lastbc2 > 5.0:
                     _lastbc2 = time.time()
                     print(f"[hazard] settle-wait v={v:.2f} state={_st} "
                           f"({pos[0]:.1f},{pos[1]:.1f})", flush=True)
-                if _st != "MRM_MOVE" or not (_lo <= v <= _hi):
+                # 정착 = MRM_MOVE + 1.0 s 전 구간 밴드 안 + 스프레드 <= 0.25
+                # (감속/가속으로 밴드를 '통과'하는 과도 상태 배제 — D01 실측:
+                # 감속 3.15->2.65가 1 s 걸려 구식 판정을 통과해 오발사)
+                _vs = [v2 for _, v2 in _vhist]
+                _span = _vhist[-1][0] - _vhist[0][0] if len(_vhist) > 1 else 0.0
+                _settled = (_st == "MRM_MOVE" and _span >= 1.0
+                            and all(_lo <= v2 <= _hi for v2 in _vs)
+                            and max(_vs) - min(_vs) <= 0.25)
+                if _settled and _band_since is None:
+                    _band_since = _now
+                    print(f"[hazard] settled v={v:.2f} "
+                          f"spread={max(_vs)-min(_vs):.2f}", flush=True)
+                if not _settled:
                     _band_since = None
-                elif _band_since is None:
-                    _band_since = time.time()
-                    print(f"[hazard] settle band entered v={v:.2f}", flush=True)
-                elif time.time() - _band_since >= 1.0:
-                    print(f"[hazard] SETTLE-TRIGGER fire v={v:.2f} "
-                          f"band=[{_lo:.2f},{_hi:.2f}] at "
-                          f"({pos[0]:.1f},{pos[1]:.1f})", flush=True)
+                elif fired is False:
+                    # 스폰 방향 사전 검사: 차선 전방이 에고 진행방향과 일치해야
+                    # 발사 (D01 실측: 감속 표류 중 반대 차선 스냅 -> 뒤쪽 스폰)
+                    _hdg = globals().get("_last_hdg")
+                    _dir_ok = False
                     try:
                         world = client.get_world()
-                    except Exception:
+                        _m9 = world.get_map()
+                        _wp9 = _m9.get_waypoint(
+                            carla.Location(x=pos[0], y=pos[1], z=0.3))
+                        _nx9 = _wp9.next(float(_dist_fixed)) if _wp9 else None
+                        if _hdg is not None and _nx9:
+                            _tl9 = _nx9[0].transform.location
+                            _dx, _dy = _tl9.x - pos[0], _tl9.y - pos[1]
+                            _hn = math.hypot(*_hdg) or 1.0
+                            _dn = math.hypot(_dx, _dy) or 1.0
+                            _cos = (_dx * _hdg[0] + _dy * _hdg[1]) / (_hn * _dn)
+                            _dir_ok = _cos > 0.6
+                            if not _dir_ok:
+                                print(f"[hazard] spawn-dir mismatch cos={_cos:.2f}"
+                                      " — hold fire", flush=True)
+                    except Exception as e:
+                        print(f"[hazard] dir check failed: {e!r}", flush=True)
                         world = None
-                    if world is not None:
+                    if _dir_ok and world is not None:
+                        print(f"[hazard] SETTLE-TRIGGER fire v={v:.2f} "
+                              f"band=[{_lo:.2f},{_hi:.2f}] at "
+                              f"({pos[0]:.1f},{pos[1]:.1f})", flush=True)
                         r = spawn_ped_xy(world, pos, _dist_fixed, walk_speed,
                                          lat_jitter=_lat_jit)
                         if r is not None:
                             ped, direction = r
                             attach_collision_sensor(world, ped)
-                    fired = True
+                        fired = True
+                    else:
+                        _band_since = None      # 다음 안정 창에서 재시도
                 time.sleep(0.05)
         t_wait0 = time.time()
         _lastbc = 0.0

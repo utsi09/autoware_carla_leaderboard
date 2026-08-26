@@ -41,12 +41,29 @@ run_one() {  # SEED WS JIT FSEED WSEED CAP DIST
   V1=""; OK=0
   if [ -n "$TICK" ]; then
     V1=$(awk -F, 'NR==2{print $8}' "$TICK")
-    OK=$(python3 -c "
-import sys
-b={'4.2':(3.85,4.45),'3.6':(3.25,3.75),'3.0':(2.65,3.15)}['$CAP']
-try: v=float('$V1')
-except Exception: print(0); raise SystemExit
-print(1 if b[0]-0.15<=v<=b[1]+0.15 else 0)")
+    OK=$(python3 - "$CAP" "$TICK" <<'PY'
+import sys, csv, math
+cap, tick = sys.argv[1], sys.argv[2]
+b = {'4.2': (3.85, 4.45), '3.6': (3.25, 3.75), '3.0': (2.65, 3.15)}[cap]
+try:
+    rows = list(csv.DictReader(open(tick)))
+except Exception:
+    print(0); raise SystemExit
+ok = 0
+if len(rows) >= 3:
+    v = float(rows[0]['ego_v'])
+    ex, ey = float(rows[0]['ego_x']), float(rows[0]['ego_y'])
+    px, py = float(rows[0]['ped_x']), float(rows[0]['ped_y'])
+    j = min(len(rows) - 1, 10)               # 첫 ~0.5 s 이동 벡터 = 진행방향
+    hx, hy = float(rows[j]['ego_x']) - ex, float(rows[j]['ego_y']) - ey
+    dx, dy = px - ex, py - ey
+    hn = math.hypot(hx, hy) or 1.0
+    dn = math.hypot(dx, dy) or 1.0
+    cos = (dx * hx + dy * hy) / (hn * dn)    # 보행자가 전방인가 (D01 역스폰 방지)
+    ok = 1 if (b[0] - 0.15 <= v <= b[1] + 0.15 and cos > 0.6) else 0
+print(ok)
+PY
+)
   fi
   OUT=$(tail -400 $LOG | grep -oE 'result: [A-Z_]+' | tail -1)
   echo "${TAG},${SEED},${CAP},${D},$((A+1)),${OK},${V1},${OUT#result: },${TICK##*/}" >> $PROG
@@ -71,6 +88,12 @@ if [ "$1" = "dev2" ]; then                  # D01: 캡 재발행 패치 검증 (
   run_one D01 3.0 0.0 998 1998 3.6 7
   run_one D01 3.0 0.0 998 1998 4.2 8
   echo "SPEED_DOSE_DEV2_DONE" | tee -a $LOG; exit 0
+fi
+if [ "$1" = "dev3" ]; then                  # D02: 안정판정+방향검사 검증 (본 분석 제외)
+  run_one D02 3.0 0.0 997 1997 3.0 8
+  run_one D02 3.0 0.0 997 1997 3.6 7
+  run_one D02 3.0 0.0 997 1997 4.2 8
+  echo "SPEED_DOSE_DEV3_DONE" | tee -a $LOG; exit 0
 fi
 
 mapfile -t ROWS < <(tail -n +2 experiments/seeds_speed_dose.csv)
