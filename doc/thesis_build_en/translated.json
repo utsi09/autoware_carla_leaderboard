@@ -1038,11 +1038,11 @@
     "i": 10,
     "kind": "fig",
     "fields": [
-     "Figure 4-2. Sensor-level effects of fault injection — before/after applying the same physical equations and parameters as the injector to one measured Town07 LiDAR scan and camera frame. (a) LiDAR sparsification (lso): intensity attenuation (T²) in the front contaminated sector and disappearance below the detection threshold — distant, dark targets vanish first. (b) LiDAR clutter (lcl): long-range dropout from precipitation attenuation, range jitter, and near-range-biased spurious returns (red). (c) Camera pixel noise (cn). (d) Navigation fault waveforms — the temporal structure of white noise (gn), correlated bias (gb), and bias ramp (imd). Parameters in all panels are the raw mid/high values of Table 4-2.",
+     "Figure 4-2. Sensor-level effects of fault injection — before/after applying the same physical equations and parameters as the injector to one measured Town07 LiDAR scan and camera frame. (a) LiDAR sparsification (lso): intensity attenuation (T²) in the front contaminated sector and disappearance below the detection threshold — distant, dark targets vanish first. (b) LiDAR clutter (lcl): long-range dropout from precipitation attenuation, range jitter, and near-range-biased spurious returns (red). (c) Camera pixel noise (cn). (d) temporal structure of the navigation fault waveforms — GNSS family (white noise gn, correlated bias gb, outage gf) and gyro family (white noise imn, fixed bias imb, bias ramp imd). Parameters in all panels are the raw mid/high values of Table 4-2.",
      "fig4_faults",
      "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig6_faults.png",
      null,
-     11.5
+     8.5
     ]
    },
    {
