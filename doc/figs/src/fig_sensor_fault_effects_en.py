@@ -95,16 +95,19 @@ ax.text((T_OFF + 120) / 2, 0.5, 'no fix', ha='center', fontsize=6.5)
 ax.set_ylim(-0.1, 1.25); ax.set_yticks([0, 1]); ax.set_yticklabels(['off', 'on'], fontsize=5.5)
 wave(ax, 'gf — GNSS blackout (no fix after onset)', None)
 
-# row (e-cont.): gyro family — fixed bias / bias ramp
+# row (e-cont.): gyro family — white noise / fixed bias / bias ramp
 ax = fig.add_subplot(gs[4, 0])
+ax.plot(t_, rng.normal(0, 0.05, len(t_)), lw=0.5, color='black')
+ax.set_ylim(-0.22, 0.22)
+wave(ax, 'imn — white noise (σ=0.05 rad/s)', 'nav faults: gyro\nyaw-rate error [rad/s]')
+ax = fig.add_subplot(gs[4, 1])
 ax.plot(t_, np.full_like(t_, 0.3), lw=1.2, color='black')
 ax.set_ylim(0, 0.65)
-wave(ax, 'imb — fixed bias (0.3 rad/s)', 'nav faults: gyro\nbias [rad/s]')
-ax = fig.add_subplot(gs[4, 1])
+wave(ax, 'imb — fixed bias (0.3 rad/s)', None)
+ax = fig.add_subplot(gs[4, 2])
 ax.plot(t_, 0.005 * t_, lw=1.2, color='black')
 ax.set_ylim(0, 0.65)
 wave(ax, 'imd — bias ramp (0.005 rad/s²)', None)
-fig.add_subplot(gs[4, 2]).axis('off')
 
 plt.savefig(OUT); plt.close()
 print('saved')
