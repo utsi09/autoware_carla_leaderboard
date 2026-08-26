@@ -38,12 +38,12 @@ def detect_onset(fname, ch):
     return None
 
 PANELS = [
-    ('(a) LiDAR soiling (lso)', 'capability/perception',
+    ('(a) LiDAR soiling (lso)', 'sensor/LIDAR_front',
      [('scoretrace_nf_mid.csv', 'fault-free', figstyle.C_NF, None),
       ('scoretrace_lso_mid.csv', 'mid (tolerated)', figstyle.C_MID, None),
       ('scoretrace_lso_high.csv', 'high (intervention)', figstyle.C_HIGH,
        'sensor/LIDAR_front')]),
-    ('(b) camera pixel noise (cn)', 'capability/perception',
+    ('(b) camera pixel noise (cn)', 'sensor/CAMERA_front',
      [('scoretrace_nf_mid.csv', 'fault-free', figstyle.C_NF, None),
       ('scoretrace_cn_mid.csv', 'mid (intervention)', figstyle.C_MID,
        'sensor/CAMERA_front'),
@@ -51,41 +51,43 @@ PANELS = [
        'sensor/CAMERA_front')]),
 ]
 
-fig, axes = plt.subplots(1, 2, figsize=(7.2, 2.9), dpi=200, sharey=True)
-for ax, (title, channel, series) in zip(axes, PANELS):
+fig, axes = plt.subplots(2, 2, figsize=(7.2, 4.4), dpi=200,
+                         sharex='col', sharey='row')
+for col, (title, raw_ch, series) in enumerate(PANELS):
+    ax_cap, ax_raw = axes[0][col], axes[1][col]
     onsets = []
     for fname, label, color, onset_ch in reversed(series):
-        xs, ys = series_pts(fname, channel)
-        ax.plot(xs, ys, color=color, lw=1.3, ls='-', label=label,
-                solid_joinstyle='round')
+        xs, ys = series_pts(fname, 'capability/perception')
+        ax_cap.plot(xs, ys, color=color, lw=1.2, ls='-', label=label,
+                    solid_joinstyle='round')
+        rx, ry = series_pts(fname, raw_ch)
+        ax_raw.plot(rx, ry, color=color, lw=1.0, ls='-', alpha=0.9,
+                    solid_joinstyle='round')
         if onset_ch:
             t_inj = detect_onset(fname, onset_ch)
             if t_inj is not None:
-                ax.axvline(t_inj, color=color, lw=0.9, ls=(0, (2, 2)), alpha=0.65)
+                for ax in (ax_cap, ax_raw):
+                    ax.axvline(t_inj, color=color, lw=0.9, ls=(0, (2, 2)), alpha=0.6)
                 onsets.append(t_inj)
-            if onset_ch == 'sensor/CAMERA_front':
-                rx, ry = series_pts(fname, onset_ch)
-                ax.plot(rx, ry, color=color, lw=0.8, ls=(0, (1.5, 1.5)),
-                        alpha=0.5, solid_joinstyle='round')
     if onsets:
-        ax.text(max(onsets) + 4, 1.035, 'fault onset', fontsize=7,
-                color='#5a6170', ha='left', va='top')
+        ax_cap.text(max(onsets) + 4, 1.03, 'fault onset', fontsize=7,
+                    color='#5a6170', ha='left', va='top')
     for y in (0.7, 0.3):
-        ax.axhline(y, color='#3a3f4c', lw=0.8, ls=(0, (5, 3)))
-    ax.set_ylim(0.0, 1.06)
-    ax.set_xlim(left=21)
-    ax.set_title(title, fontsize=8)
-    ax.set_xlabel('time since engagement [s]', fontsize=7.5)
-    ax.tick_params(labelsize=7)
-axes[0].set_ylabel('perception capability score', fontsize=8.5)
-axes[0].text(24, 0.72, r'$\theta_H$', fontsize=8, color='#3a3f4c', va='bottom')
-axes[0].text(24, 0.32, r'$\theta_L$', fontsize=8, color='#3a3f4c', va='bottom')
-axes[0].legend(loc='lower right', frameon=False, fontsize=7)
-from matplotlib.lines import Line2D as _L2
-h1, l1 = axes[1].get_legend_handles_labels()
-h1.append(_L2([], [], color='#5a6170', lw=0.8, ls=(0, (1.5, 1.5)), alpha=0.7))
-l1.append('camera raw score')
-axes[1].legend(h1, l1, loc='lower right', frameon=False, fontsize=7)
+        ax_cap.axhline(y, color='#3a3f4c', lw=0.8, ls=(0, (5, 3)))
+    ax_cap.set_ylim(0.0, 1.06)
+    ax_raw.set_ylim(0.0, 1.06)
+    for ax in (ax_cap, ax_raw):
+        ax.set_xlim(left=21)
+        ax.tick_params(labelsize=7)
+    ax_cap.set_title(title, fontsize=8)
+    ax_raw.set_xlabel('time since engagement [s]', fontsize=7.5)
+
+axes[0][0].set_ylabel('perception capability\n(decision input)', fontsize=8)
+axes[1][0].set_ylabel('affected-sensor\nraw score', fontsize=8)
+axes[0][0].text(24, 0.72, r'$\theta_H$', fontsize=8, color='#3a3f4c', va='bottom')
+axes[0][0].text(24, 0.32, r'$\theta_L$', fontsize=8, color='#3a3f4c', va='bottom')
+axes[0][0].legend(loc='lower right', frameon=False, fontsize=6.5)
+axes[0][1].legend(loc='lower right', frameon=False, fontsize=6.5)
 fig.tight_layout()
 fig.savefig(OUT, bbox_inches='tight', pad_inches=0.05)
 print('saved')
