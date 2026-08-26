@@ -132,7 +132,7 @@
     "i": 17,
     "kind": "p",
     "fields": [
-     "Fourth, as a validation contribution, we perform encounter-level quantitative validation and large-scale matrix validation. Using a pedestrian dart-out distance ladder, we empirically measure the avoidance/collision boundary by speed (8–11 m at 4.2 m/s, 7–8 m at 3.0 m/s) and compare it against the stopping distance model; through same-seed paired four-arm ablation and a two-regime analysis of the transient versus settled cruise, we show that the residual risk of evacuation is concentrated in the post-detection transient — a quantitative observation supporting the need to shorten the FTTI; and with the main matrix of fault type × severity × traffic density × method comprising 1,131 valid cases, we quantify the monitoring and evacuation behavior and the reduction in exposure."
+     "Fourth, as a validation contribution, we perform encounter-level quantitative validation and large-scale matrix validation. Using a pedestrian dart-out distance ladder, we empirically measure the avoidance/collision boundary by speed (8–11 m at 4.2 m/s, 7–8 m at 3.0 m/s) and compare it against the stopping distance model; through same-seed paired four-arm ablation and a two-regime analysis of the transient versus settled cruise, we show that the residual risk of evacuation is concentrated in the post-detection transient — a quantitative observation supporting the need to shorten detection and response times (widening the margin within the FTTI); and with the main matrix of fault type × severity × traffic density × method comprising 1,131 valid cases, we quantify the monitoring and evacuation behavior and the reduction in exposure."
     ]
    },
    {
@@ -212,7 +212,7 @@
     "i": 6,
     "kind": "p",
     "fields": [
-     "ISO 26262 (2nd edition) defines the FTTI as \"the minimum time from the occurrence of a fault to the point at which a hazardous event may occur, assuming the safety mechanisms are not activated,\" but provides no concrete values; the FTTI must be derived per safety goal from vehicle dynamics and scenarios — Bosch's estimation method [8] is a representative case, deriving 1.4–1.8 s in a lane-keeping-loss scenario. As risk metrics, time-to-collision (TTC) [9] and its extensions [10], and RSS [11], which formalizes safe distances with worst-case kinematics, are standard. This study implements this framework as a dynamic detection budget that ties the detection-time requirement to driving risk (including the FDTI/FRTI and safety-margin decomposition framework, Chapter 3, Section 4), and, by measuring at the encounter level that the residual risk of evacuation-type MRMs concentrates in the post-detection transient (Chapter 5, Sections 5-6), provides an observation supporting the need to shorten the FTTI."
+     "ISO 26262 (2nd edition) defines the FTTI as \"the minimum time from the occurrence of a fault to the point at which a hazardous event may occur, assuming the safety mechanisms are not activated,\" but provides no concrete values; the FTTI must be derived per safety goal from vehicle dynamics and scenarios — Bosch's estimation method [8] is a representative case, deriving 1.4–1.8 s in a lane-keeping-loss scenario. As risk metrics, time-to-collision (TTC) [9] and its extensions [10], and RSS [11], which formalizes safe distances with worst-case kinematics, are standard. This study implements this framework as a dynamic detection budget that ties the detection-time requirement to driving risk (including the FDTI/FRTI and safety-margin decomposition framework, Chapter 3, Section 4), and, by measuring at the encounter level that the residual risk of evacuation-type MRMs concentrates in the post-detection transient (Chapter 5, Sections 5-6), provides an observation supporting the need to shorten detection and response times (widening the margin within the FTTI)."
     ]
    },
    {
@@ -806,7 +806,7 @@
     "i": 44,
     "kind": "p",
     "fields": [
-     "Here τ≈1.5 s and a≈3.5 m/s² are assumed nominal lumped parameters chosen to reproduce the near-boundary regime, and the model's outputs should be read as model-derived bounds under these assumptions. In a dedicated braking experiment (fault-free stock stack, a pedestrian appearing 14 m ahead during 4.2 m/s cruise, n=5, physics-tick logs), braking onset lagged the spawn by 0.46±0.08 s and the energy-consistent effective deceleration was 2.87±0.20 m/s² over stopping distances of 4.2–5.8 m — the onset delay is encounter-geometry-dependent (early precautionary braking under long preview versus an effective delay of ≈1.5 s in the 8 m near-boundary regime), so a single (τ, a) pair is a lumped approximation; the identification data (braking tick logs) and the validation data (the ladder boundary) are independent. In the near-boundary regime, τ≈1.5 s remains the effective hazard-response delay (from pedestrian recognition through planning to brake actuation), validated by the agreement between the measured avoid/collide boundary of the distance ladder (8–11 m) and the model-computed value (8.8 m) (Chapter 5, Section 3). With effective deceleration a≈3.5 m/s², the required distance is 8.82 m for speed-limit driving (v=4.2 m/s) and 5.79 m for v=3.0 m/s (d_margin=0). Upon entering MRM_MOVE, the supervisor imposes a fixed speed cap of 3.0 m/s on the planning layer — a remaining-capability-based conservative fixed cap (enforced upper bound) not coupled to fault severity, which lies below the model-derived upper bound v_max≈3.89 m/s obtained by inverting Eq. (3-9) under nominal parameters for an 8 m dart-out margin — that is, 3.0 m/s is a conservative policy value chosen below the model bound, not an analytical result of the model (d_margin=0; the model underestimates the required distance in the 3.0 m/s regime — prediction 5.79 m versus the measured boundary of 7–8 m, corrected by the measurements of Chapter 5, Section 3) — and whose compliance was confirmed in measurements (a health-proportional cap was implemented but unused — Table 4-4). The cap is delivered via the Autoware speed-cap candidate input topic — an implementation that directly published the cap output was found in measurement to contend with the selector and block restart, and was corrected; the implementation lesson is to intervene on the input side of the arbiter."
+     "Here τ≈1.5 s and a≈3.5 m/s² are not independently measured values but nominal lumped values calibrated to reproduce the measured ladder boundary (8–11 m); the formula is therefore a design approximation for selecting the cap policy value, not a predictive model of the safety boundary. In a dedicated braking experiment (fault-free stock stack, a pedestrian appearing 14 m ahead during 4.2 m/s cruise, n=5, physics-tick logs), braking onset lagged the spawn by 0.46±0.08 s and the energy-consistent effective deceleration was 2.87±0.20 m/s² over stopping distances of 4.2–5.8 m — the onset delay is encounter-geometry-dependent (early precautionary braking under long preview versus an effective delay of ≈1.5 s in the 8 m near-boundary regime), so a single (τ, a) pair is a lumped approximation; the agreement with the ladder boundary is a self-consistency check of the calibration, not an independent validation, while the dedicated braking experiment is an independent observation showing that (τ, a) are regime-dependent. In the near-boundary regime, τ≈1.5 s remains the effective hazard-response delay (from pedestrian recognition through planning to brake actuation), validated by the agreement between the measured avoid/collide boundary of the distance ladder (8–11 m) and the model-computed value (8.8 m) (Chapter 5, Section 3). With effective deceleration a≈3.5 m/s², the required distance is 8.82 m for speed-limit driving (v=4.2 m/s) and 5.79 m for v=3.0 m/s (d_margin=0). Upon entering MRM_MOVE, the supervisor imposes a fixed speed cap of 3.0 m/s on the planning layer — a remaining-capability-based conservative fixed cap (enforced upper bound) not coupled to fault severity, which lies below the model-derived upper bound v_max≈3.89 m/s obtained by inverting Eq. (3-9) under nominal parameters for an 8 m dart-out margin — that is, 3.0 m/s is a conservative policy value chosen below the model bound, not an analytical result of the model (d_margin=0; the model underestimates the required distance in the 3.0 m/s regime — prediction 5.79 m versus the measured boundary of 7–8 m, corrected by the measurements of Chapter 5, Section 3) — and whose compliance was confirmed in measurements (a health-proportional cap was implemented but unused — Table 4-5). The cap is delivered via the Autoware speed-cap candidate input topic — an implementation that directly published the cap output was found in measurement to contend with the selector and block restart, and was corrected; the implementation lesson is to intervene on the input side of the arbiter."
     ]
    },
    {
@@ -865,7 +865,7 @@
     "i": 2,
     "kind": "p",
     "fields": [
-     "The experimental stage is a closed-loop environment coupling the CARLA 0.9.16 simulator with Autoware 0.39.0 (Figure 4-1). The integration infrastructure is based on AWCL [52], the Autoware-CARLA leaderboard framework released by the Institute of Automotive Technology at TUM (C++ bridge, vehicle digital twin, scenario runner); CARLA runs on the host, while the bridge, leaderboard, and Autoware run in independent containers. The map is a custom vector map of CARLA Town07 (a low-speed urban/rural mix) annotated with shoulder and parking-lot candidates, the speed limit is 15 km/h (4.2 m/s), and the simulator was fully restarted for every case to block state accumulation and ensure independence between cases (CARLA_RESTART_EVERY=1, Table 4-4)."
+     "The experimental stage is a closed-loop environment coupling the CARLA 0.9.16 simulator with Autoware 0.39.0 (Figure 4-1). The integration infrastructure is based on AWCL [52], the Autoware-CARLA leaderboard framework released by the Institute of Automotive Technology at TUM (C++ bridge, vehicle digital twin, scenario runner); CARLA runs on the host, while the bridge, leaderboard, and Autoware run in independent containers. The map is a custom vector map of CARLA Town07 (a low-speed urban/rural mix) annotated with shoulder and parking-lot candidates, the speed limit is 15 km/h (4.2 m/s), and the simulator was fully restarted for every case to block state accumulation and ensure independence between cases (CARLA_RESTART_EVERY=1, Table 4-5)."
     ]
    },
    {
@@ -1038,7 +1038,7 @@
     "i": 10,
     "kind": "fig",
     "fields": [
-     "Figure 4-2. Sensor-level effects of fault injection — before/after applying the same physical equations and parameters as the injector to one measured Town07 LiDAR scan and camera frame. (a) LiDAR sparsification (lso): intensity attenuation (T²) in the front contaminated sector and disappearance below the detection threshold — distant, dark targets vanish first. (b) LiDAR clutter (lcl): long-range dropout from precipitation attenuation, range jitter, and near-range-biased spurious returns (red). (c) Camera pixel noise (cn). (d) GNSS fault waveforms — white noise (gn), correlated bias (gb), outage (gf). (e) Gyro fault waveforms — white noise (imn), fixed bias (imb), bias ramp (imd). Panel parameters are the injector's raw values corresponding to the severity definitions of Table 4-2 (representative values in Table 4-4); outage (gf) and death-type faults have no severity grades.",
+     "Figure 4-2. Sensor-level effects of fault injection — before/after applying the same physical equations and parameters as the injector to one measured Town07 LiDAR scan and camera frame. (a) LiDAR sparsification (lso): intensity attenuation (T²) in the front contaminated sector and disappearance below the detection threshold — distant, dark targets vanish first. (b) LiDAR clutter (lcl): long-range dropout from precipitation attenuation, range jitter, and near-range-biased spurious returns (red). (c) Camera pixel noise (cn). (d) GNSS fault waveforms — white noise (gn), correlated bias (gb), outage (gf). (e) Gyro fault waveforms — white noise (imn), fixed bias (imb), bias ramp (imd). Panel parameters are the injector's raw values corresponding to the severity definitions of Table 4-2 (representative values in Table 4-5); outage (gf) and death-type faults have no severity grades.",
      "fig4_faults",
      "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig6_faults.png",
      null,
@@ -1057,7 +1057,78 @@
     "i": 12,
     "kind": "p",
     "fields": [
-     "The main campaign is a matrix of fault type × severity × traffic density (none/def/agg: no traffic / defensive / aggressive) × method (ours/baseline) × repetition, executed serially by a battery script, with infrastructure-failure cases re-collected via a retry chain. The total number of valid cases is 1,131. This includes the results of fully re-running the 450 affected camera- and navigation-family cases after a defect in the evacuation-site cost function that miscounted traffic lights (fixed with the clustering method of Chapter 3, Section 5) was uncovered — the discovery process and scope are stated explicitly so that follow-up research can treat map annotation quality as a hidden confounding variable in evacuation-site selection."
+     "The main campaign is a matrix of fault type × severity × traffic density (none/def/agg: no traffic / defensive / aggressive) × method (ours/baseline) × repetition, executed serially by a battery script, with infrastructure-failure cases re-collected via a retry chain. The total number of valid cases is 1,131 (39 short of the planned 1,170, all in lcl-high — accounting in Table 4-3). This includes the results of fully re-running the 450 affected camera- and navigation-family cases after a defect in the evacuation-site cost function that miscounted traffic lights (fixed with the clustering method of Chapter 3, Section 5) was uncovered — the discovery process and scope are stated explicitly so that follow-up research can treat map annotation quality as a hidden confounding variable in evacuation-site selection."
+    ]
+   },
+   {
+    "i": -1,
+    "kind": "tbl",
+    "fields": [
+     "Table 4-3. Main-campaign case accounting — planned versus final valid",
+     "tbl4_acct",
+     [
+      [
+       "Block",
+       "Planned",
+       "Final valid",
+       "Notes"
+      ],
+      [
+       "cf",
+       "90",
+       "90",
+       "v4.8 re-run batch adopted"
+      ],
+      [
+       "cn",
+       "180",
+       "180",
+       "v4.8 re-run batch adopted"
+      ],
+      [
+       "gn",
+       "180",
+       "180",
+       "v4.8 re-run batch adopted"
+      ],
+      [
+       "lso",
+       "180",
+       "180",
+       ""
+      ],
+      [
+       "lcl",
+       "180",
+       "141",
+       "39 short in lcl-high — the final-parameter batch halted at 51 rows (all 30 aggressive-traffic and 9 defensive cases unexecuted); the 60 later re-runs failed adoption due to traffic-spawn clearing (density condition unmet) and trigger deviation"
+      ],
+      [
+       "imn",
+       "180",
+       "180",
+       "1 row CARLA_DIED — excluded from block statistics"
+      ],
+      [
+       "lf",
+       "90",
+       "90",
+       ""
+      ],
+      [
+       "nf",
+       "90",
+       "90",
+       "false-activation control"
+      ],
+      [
+       "Total",
+       "1,170",
+       "1,131",
+       ""
+      ]
+     ],
+     "Infrastructure failures (CARLA_DIED/SETUP_FAIL) were replaced by same-condition re-runs; the adopted batch per block and the replacement rules are fixed in the merge script (merge_all.py)."
     ]
    },
    {
@@ -1170,14 +1241,14 @@
     "i": 26,
     "kind": "p",
     "fields": [
-     "To isolate the contributions of non-intervention, stop, evacuation, and the speed cap — non-intervention, stop, evacuation, and speed cap — a four-arm ablation study was designed (Table 4-3). The design was finalized after incorporating two rounds of external expert review."
+     "To isolate the contributions of non-intervention, stop, evacuation, and the speed cap — non-intervention, stop, evacuation, and speed cap — a four-arm ablation study was designed (Table 4-4). The design was finalized after incorporating two rounds of external expert review."
     ]
    },
    {
     "i": 27,
     "kind": "tbl",
     "fields": [
-     "Table 4-3. Definition of the four ablation arms",
+     "Table 4-4. Definition of the four ablation arms",
      "tbl4_2",
      [
       [
@@ -1218,7 +1289,7 @@
     "i": 28,
     "kind": "p",
     "fields": [
-     "The key controls are as follows. (i) Same-seed pairing: ten seeds (S02–S11; S01 was excluded in advance as a development seed) are shared by the four arms, and each seed fixes the fault onset time, walking speed, lateral jitter, and the CARLA, fault-waveform, and pedestrian random numbers (specific values in Table 4-4) — since even the fault waveform is identical, the only difference between arms is the response policy. (ii) Behavior-independent launch: all four arms launch at t_detect+3.0 s based on shadow detection, and A1 also starts the detector in log-only mode, so the definition of the launch time is identical — this moment is a transient before the evacuation arms complete deceleration, so this ablation deliberately targets the most unfavorable time window for the evacuation policy. (iii) Position-balanced ordering: the execution order of 10 seeds × 4 arms per round was constraint-randomized with per-arm position balance and frozen before execution (same rule for the first and extension rounds). (iv) Only simulator failures were re-run with the same seed (S05 twice in this campaign). Before the main run, smoke cases verified fault-waveform checksum agreement across the four arms (first 20 samples), detection-time difference Δt_detect < 0.3 s, launch geometry 8±0.2 m, and A1 integrity (speed-profile difference with detector on/off < 0.05 m/s RMS), after which the main 40 cases were executed."
+     "The key controls are as follows. (i) Same-seed pairing: ten seeds (S02–S11; S01 was excluded in advance as a development seed) are shared by the four arms, and each seed fixes the fault onset time, walking speed, lateral jitter, and the CARLA, fault-waveform, and pedestrian random numbers (specific values in Table 4-5) — since even the fault waveform is identical, the only difference between arms is the response policy. (ii) Behavior-independent launch: all four arms launch at t_detect+3.0 s based on shadow detection, and A1 also starts the detector in log-only mode, so the definition of the launch time is identical — this moment is a transient before the evacuation arms complete deceleration, so this ablation deliberately targets the most unfavorable time window for the evacuation policy. (iii) Position-balanced ordering: the execution order of 10 seeds × 4 arms per round was constraint-randomized with per-arm position balance and frozen before execution (same rule for the first and extension rounds). (iv) Only simulator failures were re-run with the same seed (S05 twice in this campaign). Before the main run, smoke cases verified fault-waveform checksum agreement across the four arms (first 20 samples), detection-time difference Δt_detect < 0.3 s, launch geometry 8±0.2 m, and A1 integrity (speed-profile difference with detector on/off < 0.05 m/s RMS), after which the main 40 cases were executed."
     ]
    },
    {
@@ -1248,14 +1319,14 @@
     "i": 32,
     "kind": "p",
     "fields": [
-     "For reproducibility, the key parameters across the experiments are summarized in Table 4-4. All values are exactly the configurations used when the experiments were run, and the supporting section is indicated alongside."
+     "For reproducibility, the key parameters across the experiments are summarized in Table 4-5. All values are exactly the configurations used when the experiments were run, and the supporting section is indicated alongside."
     ]
    },
    {
     "i": 33,
     "kind": "tbl",
     "fields": [
-     "Table 4-4. Summary of key experimental parameters",
+     "Table 4-5. Summary of key experimental parameters",
      "tbl4_3",
      [
       [
@@ -1276,7 +1347,17 @@
       [
        "Stopping-distance model",
        "τ=1.5 s, a=3.5 m/s²",
-       "d = vτ + v²/2a (Eq. (3-9)); τ is the effective hazard-response delay (Chapter 3, Section 6)"
+       "d = vτ + v²/2a (Eq. (3-9)); nominal values calibrated to the ladder boundary — a design approximation (Chapter 3, Section 6)"
+      ],
+      [
+       "Cost-function weights",
+       "w_t=7.0/s · w_tl=200 · w_sec=500 · w_loc=14/s",
+       "Eq. (3-8); expected wait 15 s per traffic light, shoulder MRC penalty 175 (≈25 s of degraded driving)"
+      ],
+      [
+       "Candidate hard constraints",
+       "min approach 25 m · min shoulder length 7.0 m",
+       "candidates below these are assigned infinite cost (Chapter 3, Section 5)"
       ],
       [
        "Pedestrian launch time",
@@ -1615,7 +1696,7 @@
     "i": 13,
     "kind": "p",
     "fields": [
-     "With the fault-free stock stack driving at 4.2 m/s, the results by pedestrian dart-out spawn distance showed a clear staircase: at 14 m and 11 m, all 4/4 per distance were avoided (of each 4, 2 are post-ledger runs adjudicated by the ledger and physics oracle, and the other 2 are pre-ledger runs adjudicated by the runner and video), while at 8, 6, and 5 m all 4/4 at each distance collided (Table 5-3, Figure 5-3). The avoidance/collision boundary thus lies in the 8–11 m interval. This agrees with the stopping-distance model d = vτ + v²/2a (τ≈1.5 s, a≈3.5 m/s²), which predicts d(4.2)=8.8 m, and establishes two things: (i) the choice of 8 m as the dart-out distance in subsequent experiments is a grounded choice of \"just below the boundary where avoidance becomes physically impossible,\" and (ii) since the speed→boundary physics model is validated in this environment, the effect of the speed cap can be interpreted with the same model."
+     "With the fault-free stock stack driving at 4.2 m/s, the results by pedestrian dart-out spawn distance showed a clear staircase: at 14 m and 11 m, all 4/4 per distance were avoided (of each 4, 2 are post-ledger runs adjudicated by the ledger and physics oracle, and the other 2 are pre-ledger runs adjudicated by the runner and video), while at 8, 6, and 5 m all 4/4 at each distance collided (Table 5-3, Figure 5-3). The avoidance/collision boundary thus lies in the 8–11 m interval. This agrees with the stopping-distance model d = vτ + v²/2a (τ≈1.5 s, a≈3.5 m/s²), which predicts d(4.2)=8.8 m, and establishes two things: (i) the choice of 8 m as the dart-out distance in subsequent experiments is a grounded choice of \"just below the boundary where avoidance becomes physically impossible,\" and (ii) the speed→boundary design approximation is self-consistent in the near-boundary regime (same data as its calibration source — not an independent validation; Chapter 3, Section 6), so the effect of the speed cap can be interpreted within the same approximation."
     ]
    },
    {
@@ -1937,7 +2018,7 @@
     "i": 6,
     "kind": "p",
     "fields": [
-     "The mechanism decomposes as follows. Effect of the detection-based stop intervention (A1→A2): the 14/20 collisions of stock continued driving drop to 0/20 under detection + immediate stop — since the shadow detector operates identically in A1 as well (transitions recorded only, actions blocked), this difference is produced not by detector accuracy but by the presence or absence of a detection-based stop intervention, and the reduction was observed in the worst-case time window of a transient launch. However, since A2 is an in-lane stop, lane occupancy is not resolved within the observation horizon. The cost of evacuation (A2→A3/A4): the evacuation arms continue moving, so transient collisions remain (A3 10/20, A4 11/20 — all collisions in both arms occurred in the segment where deceleration was incomplete). For the pre-specified primary contrast, the exact McNemar test gave discordant pairs of 4:1 for A1↔A4 (4 collisions only in A1, 1 only in A4) with p=0.375, and 0:1 for A3↔A4 with p=1.0. As a post-hoc secondary analysis not included in the pre-specification, testing A2↔A4 in the same way gives discordant pairs of 11:0 with an exact two-sided p=9.8×10⁻⁴ — restricted to this 8 m/transient collision endpoint, the in-lane stop clearly dominates evacuation, quantifying the collision-side cost of the RQ2 trade-off (flagged as exploratory since it was not pre-specified). That is, no incremental collision reduction from the explicit speed cap was detected in this sample (this is the statement that \"no additionally prevented collisions were observed,\" not a claim of equivalence — the sample-size limitation of n=20 is discussed in Chapter 6, Section 3). That the collisions of uncapped evacuation (A3) under identical conditions remained at 10/20, lower than A1 (14/20), is interpreted as due to the natural deceleration of the evacuation maneuver itself, to which the speed cap adds an explicit upper bound (Chapter 6, Section 3)."
+     "The mechanism decomposes as follows. Effect of the detection-based stop intervention (A1→A2): the 14/20 collisions of stock continued driving drop to 0/20 under detection + immediate stop — since the shadow detector operates identically in A1 as well (transitions recorded only, actions blocked), this difference is produced not by detector accuracy but by the presence or absence of a detection-based stop intervention, and the reduction was observed in the worst-case time window of a transient launch. Because the encounter instant was fixed at a single point (detection + 3 s), this comparison is restricted to that transient — it is not a general stop-versus-evacuate comparison over the distribution of hazard-onset times; the settled-cruise 0/8 is a complementary observation at a different instant with a small sample. However, since A2 is an in-lane stop, lane occupancy is not resolved within the observation horizon. The cost of evacuation (A2→A3/A4): the evacuation arms continue moving, so transient collisions remain (A3 10/20, A4 11/20 — all collisions in both arms occurred in the segment where deceleration was incomplete). For the pre-specified primary contrast, the exact McNemar test gave discordant pairs of 4:1 for A1↔A4 (4 collisions only in A1, 1 only in A4) with p=0.375, and 0:1 for A3↔A4 with p=1.0. As a post-hoc secondary analysis not included in the pre-specification, testing A2↔A4 in the same way gives discordant pairs of 11:0 with an exact two-sided p=9.8×10⁻⁴ — restricted to this 8 m/transient collision endpoint, the in-lane stop clearly dominates evacuation, quantifying the collision-side cost of the RQ2 trade-off (flagged as exploratory since it was not pre-specified). That is, no incremental collision reduction from the explicit speed cap was detected in this sample (this is the statement that \"no additionally prevented collisions were observed,\" not a claim of equivalence — the sample-size limitation of n=20 is discussed in Chapter 6, Section 3). That the collisions of uncapped evacuation (A3) under identical conditions remained at 10/20, lower than A1 (14/20), is interpreted as due to the natural deceleration of the evacuation maneuver itself, to which the speed cap adds an explicit upper bound (Chapter 6, Section 3)."
     ]
    },
    {
@@ -2175,7 +2256,7 @@
     "i": 2,
     "kind": "p",
     "fields": [
-     "The structure running through the entire experiment is the temporal trade-off between stop-type and evacuation-type MRMs. In this sample, the in-lane stop showed the lowest collision rate even under the worst-case condition of transient-window launches (Chapter 5, Section 5), but its price is sustained lane occupancy (Chapter 5, Section 2); evacuation accepts controlled moving exposure and residual transient risk, but on success clears the lane and moves to a safer final position. Neither is unconditionally superior, and the choice should follow the temporal structure of the fault (hazard grace, remaining capability, and time to complete deceleration) — a result that supplies concrete selection variables to the ISO 23793-1 framework, which calls for principles of MRM type selection."
+     "The structure running through the entire experiment is the temporal trade-off between stop-type and evacuation-type MRMs. In this sample, the in-lane stop showed the lowest collision rate even under the worst-case condition of transient-window launches (Chapter 5, Section 5), but its price is sustained lane occupancy (Chapter 5, Section 2); evacuation accepts controlled moving exposure and residual transient risk, but on success clears the lane and moves to an off-lane refuge position. Lane clearance is an indicator of relinquishing lane occupancy, not proof that the final position is safer — secondary risks at the shoulder (e.g., approaching rear traffic) were not directly compared in this study. Neither is unconditionally superior, and the choice should follow the temporal structure of the fault (hazard grace, remaining capability, and time to complete deceleration) — a result that supplies concrete selection variables to the ISO 23793-1 framework, which calls for principles of MRM type selection."
     ]
    },
    {
@@ -2278,7 +2359,7 @@
     "i": 2,
     "kind": "p",
     "fields": [
-     "The conclusions can be summarized in three sentences. First, shoulder evacuation is not a panacea — stopping and evacuation constitute a temporal trade-off between immediate collision risk and lane clearance / a safe position, and the choice must follow the temporal structure of the fault. Second, the residual risk of evacuation is concentrated in the post-detection transient (from detection until the settled speed is reached) (transient 11/20 vs. settled 0/8) — the experiments support that earlier detection and faster deceleration would shrink the overall fault-response risk window (detection latency + deceleration time) (this is not a causal manipulation experiment), and an encounter-level quantitative observation supporting the need to shorten FTTI is presented. Third, simulation-based safety claims hold only on top of a validated adjudication framework — the triple adjudication of real-time ledger, physics oracle, and visual cross-check, together with the explicit identification of recording pitfalls, is the methodological contribution that underpins the figures in this study."
+     "The conclusions can be summarized in three sentences. First, shoulder evacuation is not a panacea — stopping and evacuation constitute a temporal trade-off between immediate collision risk and lane clearance / a safe position, and the choice must follow the temporal structure of the fault. Second, the residual risk of evacuation is concentrated in the post-detection transient (from detection until the settled speed is reached) — a statement restricted to the single launch instant (detection + 3 s) of the ablation (transient 11/20 vs. settled 0/8) — the experiments support that earlier detection and faster deceleration would shrink the overall fault-response risk window (detection latency + deceleration time) (this is not a causal manipulation experiment), and an encounter-level quantitative observation supporting the need to shorten detection and response times (widening the margin within the FTTI) is presented. Third, simulation-based safety claims hold only on top of a validated adjudication framework — the triple adjudication of real-time ledger, physics oracle, and visual cross-check, together with the explicit identification of recording pitfalls, is the methodological contribution that underpins the figures in this study."
     ]
    },
    {
