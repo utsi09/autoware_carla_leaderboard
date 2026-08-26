@@ -81,14 +81,14 @@ txt(1475, 130, "Fail-Safe Channel  (proposed add-on)", 20, "bold")
 
 # Monitoring
 rbox(1165, 160, 620, 235, fc=GREEN, lw=1.8)
-txt(1475, 188, "Monitoring — cdr_monitor (BT, 10 Hz)", 16, "bold")
-rbox(1188, 215, 282, 88); rbox(1480, 215, 282, 88)
-txt(1329, 259, "Freshness · quality\n· physics checks", 12.5)
-txt(1621, 259, "Sector → capability\nhealth scores", 12.5)
-ax.add_patch(FancyArrowPatch((1470, T(259)), (1481, T(259)),
+txt(1475, 190, "Monitoring — CDR Monitor (10 Hz)", 16, "bold")
+rbox(1188, 220, 282, 62); rbox(1480, 220, 282, 62)
+txt(1329, 251, "sensor health checks", 12.5)
+txt(1621, 251, "capability scores", 12.5)
+ax.add_patch(FancyArrowPatch((1470, T(251)), (1481, T(251)),
              arrowstyle="-|>", mutation_scale=16, color=INK, lw=2))
-rbox(1188, 320, 574, 57, fc=ORANGE)
-txt(1475, 348, "Dead-sensor fast check (freshness deadline)", 12.5)
+rbox(1188, 305, 574, 62, fc=ORANGE)
+txt(1475, 336, "dead-sensor fast check", 12.5)
 
 # Monitoring -> Decision
 ax.add_patch(FancyArrowPatch((1475, T(395)), (1475, T(418)),
@@ -96,15 +96,15 @@ ax.add_patch(FancyArrowPatch((1475, T(395)), (1475, T(418)),
 
 # Decision
 rbox(1165, 420, 620, 245, fc=GREEN, lw=1.8)
-txt(1475, 448, "Decision — mrm_supervisor (state machine)", 16, "bold")
-rbox(1188, 472, 282, 88); rbox(1480, 472, 282, 88)
-txt(1329, 516, "Dual-threshold\ncheck ($\\theta_\\mathrm{H}$ / $\\theta_\\mathrm{L}$)", 12.5)
-txt(1621, 516, "Refuge candidate\nsearch · cost fn.", 12.5)
-ax.add_patch(FancyArrowPatch((1470, T(516)), (1481, T(516)),
+txt(1475, 450, "Decision — MRM Supervisor", 16, "bold")
+rbox(1188, 480, 282, 62); rbox(1480, 480, 282, 62)
+txt(1329, 511, "dual-threshold check", 12.5)
+txt(1621, 511, "refuge candidate search", 12.5)
+ax.add_patch(FancyArrowPatch((1470, T(511)), (1481, T(511)),
              arrowstyle="-|>", mutation_scale=16, color=INK, lw=2))
-rbox(1188, 577, 574, 72)
-txt(1475, 598, "MRM selection", 13.5, "bold")
-txt(1475, 628, "MOVE (evacuate) / DEFER (delegate stop)", 12.5, "bold")
+rbox(1188, 565, 574, 78)
+txt(1475, 589, "MRM selection", 13.5, "bold")
+txt(1475, 621, "MOVE (evacuate)  /  DEFER (delegate stop)", 12.5)
 
 # Decision -> MRC
 ax.add_patch(FancyArrowPatch((1475, T(665)), (1475, T(700)),
@@ -112,20 +112,17 @@ ax.add_patch(FancyArrowPatch((1475, T(665)), (1475, T(700)),
 
 # MRC
 rbox(1165, 703, 620, 205, fc=LIGHT, lw=1.8)
-txt(1475, 733, "Minimal-Risk Condition (MRC)", 17, "bold")
-rbox(1188, 758, 282, 128); rbox(1480, 758, 282, 128)
-txt(1329, 793, "Shoulder /\nparking-lot stop", 13, "bold")
-txt(1329, 852, "off active lane\n(speed-capped)", 11, color="#444455")
-txt(1621, 797, "In-lane stop", 13, "bold")
-txt(1621, 850, "delegated via\ndiagnostic ERROR", 11, color="#444455")
+txt(1475, 733, "Minimal-Risk Condition (MRC)", 16, "bold")
+rbox(1188, 760, 282, 122); rbox(1480, 760, 282, 122)
+txt(1329, 797, "Shoulder /\nparking-lot stop", 13, "bold")
+txt(1329, 852, "off active lane", 11, color="#444455")
+txt(1621, 802, "In-lane stop", 13, "bold")
+txt(1621, 852, "stock Autoware MRM", 11, color="#444455")
 
 # ---------------- hard-fail fast path ----------------
-rbox(75, 705, 850, 155, fc=ORANGE, lw=2.2)
-txt(500, 738, "Hard-fail fast path (dead sensor)", 15.5, "bold")
-txt(500, 800, "freshness deadline exceeded → skip band debounce · recovery holds · retries;\n"
-              "precomputed refuge candidates → detection-to-decision within the deadline", 12)
-txt(90, 892, "$\\theta_\\mathrm{H}$: intervention-entry (upper) threshold · "
-             "$\\theta_\\mathrm{L}$: minimum-capability (lower, floor) threshold", 12.5, ha="left")
+rbox(75, 705, 850, 120, fc=ORANGE, lw=2.2)
+txt(500, 740, "Hard-fail fast path (dead sensor)", 15.5, "bold")
+txt(500, 787, "sensor silence → immediate MRM, no debounce", 12.5)
 
 # ---------------- inter-channel arrows ----------------
 # sensor topics tap (dashed gray, over the top)
@@ -151,7 +148,7 @@ ax.add_patch(FancyArrowPatch((925, T(775)), (1186, T(640)),
              arrowstyle="-|>", mutation_scale=18, color=OLIVE, lw=2, ls=(0, (5, 4))))
 
 # DEFER: in-lane stop -> stock MRM (dashed black, along the bottom)
-ax.plot([1621, 1621, 1010, 1010], [T(886), T(950), T(950), T(640)],
+ax.plot([1621, 1621, 1010, 1010], [T(882), T(950), T(950), T(640)],
         color=INK, lw=1.8, ls=(0, (6, 4)))
 ax.add_patch(FancyArrowPatch((1010, T(640)), (1010, T(563)),
              arrowstyle="-|>", mutation_scale=18, color=INK, lw=1.8, ls=(0, (6, 4))))
