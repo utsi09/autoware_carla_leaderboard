@@ -1,0 +1,93 @@
+#!/bin/bash
+# speed-dose 인과 실험 배치 (사전등록: doc/speed_dose_plan_0827.md)
+# 사용: speed_dose_batch.sh dev   -> D00 스모크 3런만
+#       speed_dose_batch.sh       -> 본 캠페인 120런 (P1~P5, 이어달리기 가능)
+cd /home/taewook/autoware_carla_leaderboard
+export PYTHONUNBUFFERED=1
+R=/home/taewook/autoware_carla_leaderboard/experiments/results
+LOG=$R/speed_dose.log
+PROG=$R/speed_dose_progress.csv
+FT=25                       # 개발 단계 확정 후 동결 (plan 참조)
+mkdir -p $R/videos_sd
+[ -f $PROG ] || echo "tag,seed,cap,dist,attempt,adopted,first_v,outcome,tick" > $PROG
+
+if pgrep -f "experiment_runner[.]py" > /dev/null; then
+  echo "runner already active — abort" | tee -a $LOG; exit 1
+fi
+
+band() { case $1 in 4.2) echo "3.9x4.45";; 3.6) echo "3.5x3.7";; 3.0) echo "2.9x3.1";; esac; }
+
+run_one() {  # SEED WS JIT FSEED WSEED CAP DIST
+  local SEED=$1 WS=$2 JIT=$3 FSEED=$4 WSEED=$5 CAP=$6 D=$7
+  local TAG=sd-${SEED}-c${CAP/./}-d${D}
+  grep -q "^${TAG},.*,1," $PROG && return 0          # 이미 채택
+  local A; A=$(grep -c "^${TAG}," $PROG)
+  [ "$A" -ge 3 ] && { echo "$TAG retries exhausted" | tee -a $LOG; return 0; }
+  local FREE; FREE=$(df --output=avail -BG / | tail -1 | tr -dc 0-9)
+  [ "$FREE" -lt 20 ] && { echo "DISK_STOP free=${FREE}G" | tee -a $LOG; exit 2; }
+  echo "===== $TAG attempt $((A+1)) $(date +%m%d_%H:%M) =====" | tee -a $LOG
+  export FAULT_SEED=$FSEED WALKER_SEED=$WSEED CASE_TAG=$TAG
+  export FAULT_TRACE=$R/ftrace_${TAG}.csv
+  export DETECT_CAP=capability/localization FREEZE_TL=1
+  MRM_MOVE_SPEED=$CAP HAZARD="ped=dist:${D}:s$(band $CAP):w${WS}:j${JIT}" \
+    python3 experiments/experiment_runner.py --method ours --fault gn --sev mid \
+    --npc none --reps 1 --t $FT >> $LOG 2>&1
+  unset CASE_TAG
+  local TICK V1 OK OUT
+  TICK=$(ls -t $R/tick_${TAG}_*.csv 2>/dev/null | head -1)
+  V1=""; OK=0
+  if [ -n "$TICK" ]; then
+    V1=$(awk -F, 'NR==2{print $8}' "$TICK")
+    OK=$(python3 -c "
+import sys
+b={'4.2':(3.9,4.45),'3.6':(3.5,3.7),'3.0':(2.9,3.1)}['$CAP']
+try: v=float('$V1')
+except Exception: print(0); raise SystemExit
+print(1 if b[0]-0.15<=v<=b[1]+0.15 else 0)")
+  fi
+  OUT=$(tail -400 $LOG | grep -oE 'result: [A-Z_]+' | tail -1)
+  echo "${TAG},${SEED},${CAP},${D},$((A+1)),${OK},${V1},${OUT#result: },${TICK##*/}" >> $PROG
+  local PV
+  for PV in $R/pvid_${TAG}_*/; do          # 프레임→mp4, PNG 즉시 삭제 (디스크 규율)
+    [ -d "$PV" ] || continue
+    ffmpeg -y -loglevel error -framerate 10 -pattern_type glob -i "${PV}f*.png" \
+      -c:v libx264 -pix_fmt yuv420p $R/videos_sd/${TAG}_a$((A+1)).mp4 \
+      && rm -rf "$PV"
+  done
+  [ "$OK" -eq 1 ] || run_one "$SEED" "$WS" "$JIT" "$FSEED" "$WSEED" "$CAP" "$D"
+}
+
+if [ "$1" = "dev" ]; then                   # D00 스모크: 본 분석 제외
+  run_one D00 3.0 0.0 999 1999 4.2 8
+  run_one D00 3.0 0.0 999 1999 3.0 8
+  run_one D00 3.0 0.0 999 1999 3.6 7
+  echo "SPEED_DOSE_DEV_DONE" | tee -a $LOG; exit 0
+fi
+
+mapfile -t ROWS < <(tail -n +2 experiments/seeds_speed_dose.csv)
+# P1: 8m 1차 종결점 (4.2 vs 3.0, 시드 교차 순서)
+i=0
+for ROW in "${ROWS[@]}"; do
+  IFS=, read -r SEED WS JIT FSEED WSEED <<< "$ROW"
+  if [ $((i % 2)) -eq 0 ]; then ORD="4.2 3.0"; else ORD="3.0 4.2"; fi
+  for CAP in $ORD; do run_one "$SEED" "$WS" "$JIT" "$FSEED" "$WSEED" "$CAP" 8; done
+  i=$((i+1))
+done
+# P2: 8m x 3.6
+for ROW in "${ROWS[@]}"; do
+  IFS=, read -r SEED WS JIT FSEED WSEED <<< "$ROW"
+  run_one "$SEED" "$WS" "$JIT" "$FSEED" "$WSEED" 3.6 8
+done
+# P3~P5: 7m -> 9m -> 6m, 시드별 속도 회전
+for D in 7 9 6; do
+  i=0
+  for ROW in "${ROWS[@]}"; do
+    IFS=, read -r SEED WS JIT FSEED WSEED <<< "$ROW"
+    case $((i % 3)) in
+      0) ORD="4.2 3.6 3.0";; 1) ORD="3.6 3.0 4.2";; 2) ORD="3.0 4.2 3.6";;
+    esac
+    for CAP in $ORD; do run_one "$SEED" "$WS" "$JIT" "$FSEED" "$WSEED" "$CAP" "$D"; done
+    i=$((i+1))
+  done
+done
+echo "SPEED_DOSE_BATCH_DONE $(date +%m%d_%H:%M)" | tee -a $LOG

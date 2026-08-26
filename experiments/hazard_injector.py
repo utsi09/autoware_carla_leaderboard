@@ -79,9 +79,11 @@ def start_ros_ego_listener():
         from std_msgs.msg import String as _Str
 
         def stcb(msg):
+            # [sd 0827] settle 게이트용 현재 상태 — 래치와 무관하게 항상 갱신
+            _ros["sup_state"] = msg.data.split(":")[0]
             if _ros.get("t_detect") or not _ros.get("detect_armed"):
                 return
-            st = msg.data.split(":")[0]
+            st = _ros["sup_state"]
             if st not in ("NORMAL", "", "IDLE"):
                 _ros["t_detect"] = time.time()
                 _p6 = _ros.get("pose")
@@ -349,12 +351,15 @@ def main():
         _arm_after = None   # [v4.9t] dist:<m>:<gate>:arm — 고장+MRM 진입 후에만 발사
         _time_trig = None   # [v5] t<초>: t_detect+delay에 속도 불문 발사
         _lat_jit = 0.0      # [v5] j<미터>: 스폰 횡방향 섭동 (시드 고정)
+        _settle_band = None  # [sd 0827] s<lo>x<hi>: 정착 속도 밴드 트리거
         if args.spec.startswith("dist") and ":" in args.spec:
             _p = args.spec.split(":")
             _dist_fixed = float(_p[1])
             for _tok in _p[2:]:
                 if _tok == "arm":
                     _arm_after = args.fault_t + 3.0
+                elif _tok.startswith("s") and "x" in _tok:
+                    _settle_band = tuple(float(v) for v in _tok[1:].split("x"))
                 elif _tok.startswith("t"):
                     _time_trig = float(_tok[1:])
                 elif _tok.startswith("w"):
@@ -484,11 +489,64 @@ def main():
                         ped, direction = r
                         attach_collision_sensor(world, ped)
                 fired = True
+        # [sd 0827 speed-dose] 정착 트리거: supervisor가 MRM_MOVE 상태이고
+        # 실측 속도가 [lo,hi] 밴드에 1.0 s 연속 머무를 때 현 위치 전방 D m 발사.
+        # 과도구간 발사(t3.0)와 달리 '상한이 실제로 성립한 정착 상태'의 조우만
+        # 만든다 — 조작 점검(manipulation check)이 트리거에 내장된 설계.
+        # 420 s 내 미발사는 배치가 MANIPULATION_FAIL로 재실행.
+        if _settle_band is not None and not fired:
+            _lo, _hi = _settle_band
+            _band_since = None
+            _lastbc2 = 0.0
+            t_wait0 = time.time()
+            while not fired and time.time() - t_wait0 < 420.0:
+                (pos, v) = ros_ego()
+                if pos is None:
+                    if _ros["t"] > 0 and time.time() - _ros["t"] > 6.0 and \
+                            time.time() - globals().get("_last_restart", 0) > 10.0:
+                        globals()["_last_restart"] = time.time()
+                        print("[hazard] odom stale — listener restart", flush=True)
+                        try:
+                            start_ros_ego_listener()
+                        except Exception as e:
+                            print(f"[hazard] restart failed: {e!r}", flush=True)
+                    _band_since = None
+                    time.sleep(0.2)
+                    continue
+                _st = _ros.get("sup_state", "")
+                if time.time() - _lastbc2 > 5.0:
+                    _lastbc2 = time.time()
+                    print(f"[hazard] settle-wait v={v:.2f} state={_st} "
+                          f"({pos[0]:.1f},{pos[1]:.1f})", flush=True)
+                if _st != "MRM_MOVE" or not (_lo <= v <= _hi):
+                    _band_since = None
+                elif _band_since is None:
+                    _band_since = time.time()
+                    print(f"[hazard] settle band entered v={v:.2f}", flush=True)
+                elif time.time() - _band_since >= 1.0:
+                    print(f"[hazard] SETTLE-TRIGGER fire v={v:.2f} "
+                          f"band=[{_lo:.2f},{_hi:.2f}] at "
+                          f"({pos[0]:.1f},{pos[1]:.1f})", flush=True)
+                    try:
+                        world = client.get_world()
+                    except Exception:
+                        world = None
+                    if world is not None:
+                        r = spawn_ped_xy(world, pos, _dist_fixed, walk_speed,
+                                         lat_jitter=_lat_jit)
+                        if r is not None:
+                            ped, direction = r
+                            attach_collision_sensor(world, ped)
+                    fired = True
+                time.sleep(0.05)
         t_wait0 = time.time()
         _lastbc = 0.0
         _t_drive_wall = None   # [v4.9t] 주행 시작 벽시계 (arm 기준점)
         _wait_max = 420.0 if _arm_after is not None else 300.0
-        while not fired and time.time() - t_wait0 < _wait_max:
+        # [sd 0827] settle 모드는 위 전용 루프가 전담 — 일반 루프 진입 금지
+        # (settle 미발사 시 길목 트리거가 대신 발사해 조작 점검을 오염 방지)
+        while not fired and _settle_band is None and \
+                time.time() - t_wait0 < _wait_max:
             (pos, v) = ros_ego()
             if pos is None:
                 # [v4.9t] 오돔 6s 이상 정지면 리스너 재시작 (spin 스레드 사망 실측)

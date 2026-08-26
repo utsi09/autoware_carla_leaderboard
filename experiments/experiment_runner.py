@@ -1065,8 +1065,10 @@ def run(args):
                         # until 래퍼: 케이스 초반 월드 로드 레이스에서 CARLA 클라가
                         # C++ terminate로 즉사(0816 실측: 로그 0바이트) — 성공(정상
                         # 종료)까지 2 s 간격 재기동. cleanup pkill이 래퍼도 잡는다.
-                        f"export CASE_TAG={case['fault']}-{case['sev']}-"
-                        f"{case['method']}{'-off' if args.mrm_off else ''}-r{case['rep']}; "
+                        # [sd 0827] 오케스트레이터가 CASE_TAG를 미리 주면 존중
+                        # (docker_bg -e 패스스루) — 시드x조건 배치의 산출물 귀속용
+                        f"export CASE_TAG=${{CASE_TAG:-{case['fault']}-{case['sev']}-"
+                        f"{case['method']}{'-off' if args.mrm_off else ''}-r{case['rep']}}}; "
                         "until python3 experiments/hazard_injector.py "
                         f"--mode={_hmode} --spec={_hspec} --fault-t={case['t']}; "
                         "do sleep 2; done",
