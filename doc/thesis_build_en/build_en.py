@@ -337,7 +337,10 @@ for chap in CHAPS:
 keys['refs'] = 'References'
 para(doc, 'References', size=16, bold=True, align=CENTER, page_break=True)
 para(doc)
+REF_KO2EN = {'평가 버전': 'evaluated version', '개발 중': 'under development'}
 for i, ref in enumerate(REFS, 1):
+    for k, v in REF_KO2EN.items():
+        ref = ref.replace(k, v)
     p = doc.add_paragraph()
     pf = p.paragraph_format
     pf.line_spacing = 1.5
