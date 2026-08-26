@@ -47,9 +47,18 @@ for lid, ll in mm.lanelets.items():
                            alpha=0.95, zorder=2))
 for wid, pts in mm.parking_lots.items():
     ax.add_patch(MPoly(pts, closed=True, fc=C_PK, ec="black", lw=0.4, alpha=0.75, zorder=2))
+# parking_space는 2점 축선 — 실제 주차선처럼 폭 2.5 m 칸 사각형 외곽선으로 그린다
+BAY_HALF_W = 1.25
 for wid, pts in mm.parking_spaces.items():
-    xs, ys = zip(*pts)
-    ax.plot(xs, ys, color="white", lw=0.5, alpha=0.9, zorder=3)
+    (x0, y0), (x1, y1) = pts[0], pts[-1]
+    L = np.hypot(x1 - x0, y1 - y0)
+    if L < 0.5:
+        continue
+    nx, ny = -(y1 - y0) / L * BAY_HALF_W, (x1 - x0) / L * BAY_HALF_W
+    bay = [(x0 + nx, y0 + ny), (x1 + nx, y1 + ny),
+           (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)]
+    ax.add_patch(MPoly(bay, closed=True, fc="none", ec="white", lw=0.55,
+                       alpha=0.95, zorder=3))
 
 ax.plot(px, py, color="#3a3a44", lw=1.0, ls=(0, (4, 2)), zorder=4)
 
