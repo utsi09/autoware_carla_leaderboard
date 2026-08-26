@@ -14,7 +14,7 @@ from fig_health_traces import series_pts as _series_pts
 EXTRA_CUT = 18.0
 def series_pts(f, ch):
     xs, ys = _series_pts(f, ch)
-    pts = [(x - EXTRA_CUT, y) for x, y in zip(xs, ys) if x >= EXTRA_CUT]
+    pts = [(x, y) for x, y in zip(xs, ys) if x >= EXTRA_CUT]
     return [p[0] for p in pts], [p[1] for p in pts]
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -69,13 +69,13 @@ for ax, (title, channel, series) in zip(axes, PANELS):
     for y in (0.7, 0.3):
         ax.axhline(y, color='#3a3f4c', lw=0.8, ls=(0, (5, 3)))
     ax.set_ylim(0.0, 1.06)
-    ax.set_xlim(left=3)
+    ax.set_xlim(left=21)
     ax.set_title(title, fontsize=8)
     ax.set_xlabel('time since engagement [s]', fontsize=7.5)
     ax.tick_params(labelsize=7)
 axes[0].set_ylabel('perception capability score', fontsize=8.5)
-axes[0].text(6, 0.72, r'$\theta_H$', fontsize=8, color='#3a3f4c', va='bottom')
-axes[0].text(6, 0.32, r'$\theta_L$', fontsize=8, color='#3a3f4c', va='bottom')
+axes[0].text(24, 0.72, r'$\theta_H$', fontsize=8, color='#3a3f4c', va='bottom')
+axes[0].text(24, 0.32, r'$\theta_L$', fontsize=8, color='#3a3f4c', va='bottom')
 axes[0].legend(loc='lower right', frameon=False, fontsize=7)
 axes[1].legend(loc='lower right', frameon=False, fontsize=7)
 fig.tight_layout()
