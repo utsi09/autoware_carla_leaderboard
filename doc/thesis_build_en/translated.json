@@ -1086,7 +1086,18 @@
     "i": 16,
     "kind": "p",
     "fields": [
-     "The v5 injector for the ablation study adds three things. First, a behavior-independent time trigger: a shadow detector subscribing to the monitoring module's scores takes as t_detect the moment the same threshold as the supervisor is crossed, and in all arms launches a pedestrian at t_detect+3.0 s, 8 m ahead of the ego, at the right edge of the lane (lateral jitter ±0.2 m). It launches even if the vehicle is stationary, and there is no no-encounter exclusion — blocking the selection bias in which an arm's behavior changes whether an encounter occurs. Second, fault-waveform seed fixing (FAULT_SEED). Third, CARLA physics-tick-synchronized recording: ego and pedestrian coordinates, speeds, and separation at every physics frame are recorded to a per-case CSV."
+     "The v5 injector for the ablation study adds three things. First, a behavior-independent time trigger: a shadow detector subscribing to the monitoring module's scores takes as t_detect the moment the same threshold as the supervisor is crossed, and in all arms launches a pedestrian at t_detect+3.0 s, 8 m ahead of the ego, at the right edge of the lane (lateral jitter ±0.2 m). It launches even if the vehicle is stationary, and there is no no-encounter exclusion — blocking the selection bias in which an arm's behavior changes whether an encounter occurs. Second, fault-waveform seed fixing (FAULT_SEED). Third, CARLA physics-tick-synchronized recording: ego and pedestrian coordinates, speeds, and separation at every physics frame are recorded to a per-case CSV (the protocol is shown in Figure 4-3)."
+    ]
+   },
+   {
+    "i": -1,
+    "kind": "fig",
+    "fields": [
+     "Figure 4-3. Pedestrian dart-out injection protocol. Fault injection (seed-fixed waveform) → shadow detection t_detect (common to all arms) → a behavior-independent launch at t_detect + 3 s spawns the pedestrian (crosses 12 m, then stops) at the standardized relative geometry of 8 m ahead, right lane edge + 0.5 m (lateral jitter ± 0.2 m).",
+     "fig4_3tl",
+     "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig11_encounter.png",
+     null,
+     14.0
     ]
    },
    {
@@ -1501,7 +1512,18 @@
     "i": 5,
     "kind": "p",
     "fields": [
-     "Behind the binary detection rates in the table lies a continuous health-score signal. What actually feeds the supervisor's state transitions (0.7/0.3) is the perception channel — under LiDAR degradation the localization capability remains intact, so the deciding variable of health = min(perception, cap_loc) is perception. This deciding variable separates into distinct bands by fault intensity: fault-free runs stay in the normal band and do not drop below the upper threshold of 0.7 after warm-up (measured minimum 0.71 — consistent with zero false activations in the 45 fault-free cases); mid severity stays in the tolerated (normal) band above the threshold (the intended non-intervention of lso-mid rests on this); and high severity departs into a low band below the threshold immediately after fault injection, triggering intervention. This band separation is the basis of the low/mid/high grading and the three-regime state transition (normal/evacuation/deferral). The dashed obstacle channel is dedicated to the MRM movement gate and is not a state-transition trigger channel; its fluctuations below 0.7 (sector-coverage changes in open terrain and during turns) are not triggering events and therefore do not contradict the zero false activations. Note, however, that the health score for the GNSS family (gn) is produced not from the /monitor/scores topic but by the supervisor-internal residual detectors (loc_meas/loc_jump), so this observation applies to the LiDAR-degradation channels of /monitor/scores."
+     "Behind the binary detection rates in the table lies a continuous health-score signal (Figure 5-2). What actually feeds the supervisor's state transitions (0.7/0.3) is the perception channel — under LiDAR degradation the localization capability remains intact, so the deciding variable of health = min(perception, cap_loc) is perception. This deciding variable separates into distinct bands by fault intensity: fault-free runs stay in the normal band and do not drop below the upper threshold of 0.7 after warm-up (measured minimum 0.71 — consistent with zero false activations in the 45 fault-free cases); mid severity stays in the tolerated (normal) band above the threshold (the intended non-intervention of lso-mid rests on this); and high severity departs into a low band below the threshold immediately after fault injection, triggering intervention. This band separation is the basis of the low/mid/high grading and the three-regime state transition (normal/evacuation/deferral). The dashed obstacle channel is dedicated to the MRM movement gate and is not a state-transition trigger channel; its fluctuations below 0.7 (sector-coverage changes in open terrain and during turns) are not triggering events and therefore do not contradict the zero false activations. Note, however, that the health score for the GNSS family (gn) is produced not from the /monitor/scores topic but by the supervisor-internal residual detectors (loc_meas/loc_jump), so this observation applies to the LiDAR-degradation channels of /monitor/scores."
+    ]
+   },
+   {
+    "i": -1,
+    "kind": "fig",
+    "fields": [
+     "Figure 5-2. Continuous health traces — band separation of the state-transition input channel (solid: perception) against the dual thresholds (0.7/0.3). Dashed lines show the MRM move-gate obstacle channel; one representative run per condition, with warm-up and end-of-run stale artifacts trimmed.",
+     "fig5_2ht",
+     "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig12_health.png",
+     null,
+     14.5
     ]
    },
    {
@@ -1593,7 +1615,7 @@
     "i": 13,
     "kind": "p",
     "fields": [
-     "With the fault-free stock stack driving at 4.2 m/s, the results by pedestrian dart-out spawn distance showed a clear staircase: at 14 m and 11 m, all 4/4 per distance were avoided (of each 4, 2 are post-ledger runs adjudicated by the ledger and physics oracle, and the other 2 are pre-ledger runs adjudicated by the runner and video), while at 8, 6, and 5 m all 4/4 at each distance collided (Table 5-3, Figure 5-2). The avoidance/collision boundary thus lies in the 8–11 m interval. This agrees with the stopping-distance model d = vτ + v²/2a (τ≈1.5 s, a≈3.5 m/s²), which predicts d(4.2)=8.8 m, and establishes two things: (i) the choice of 8 m as the dart-out distance in subsequent experiments is a grounded choice of \"just below the boundary where avoidance becomes physically impossible,\" and (ii) since the speed→boundary physics model is validated in this environment, the effect of the speed cap can be interpreted with the same model."
+     "With the fault-free stock stack driving at 4.2 m/s, the results by pedestrian dart-out spawn distance showed a clear staircase: at 14 m and 11 m, all 4/4 per distance were avoided (of each 4, 2 are post-ledger runs adjudicated by the ledger and physics oracle, and the other 2 are pre-ledger runs adjudicated by the runner and video), while at 8, 6, and 5 m all 4/4 at each distance collided (Table 5-3, Figure 5-3). The avoidance/collision boundary thus lies in the 8–11 m interval. This agrees with the stopping-distance model d = vτ + v²/2a (τ≈1.5 s, a≈3.5 m/s²), which predicts d(4.2)=8.8 m, and establishes two things: (i) the choice of 8 m as the dart-out distance in subsequent experiments is a grounded choice of \"just below the boundary where avoidance becomes physically impossible,\" and (ii) since the speed→boundary physics model is validated in this environment, the effect of the speed cap can be interpreted with the same model."
     ]
    },
    {
@@ -1641,7 +1663,7 @@
     "i": 15,
     "kind": "fig",
     "fields": [
-     "Figure 5-2. Stopping-distance model d = vτ + v²/2a (τ=1.5 s, a=3.5 m/s²) and the measured avoidance/collision boundaries from the distance ladder (shaded bands). The measured boundary at 4.2 m/s (8–11 m) matches the model prediction of 8.8 m, and the boundary at 3.0 m/s (7–8 m) is conservative relative to the prediction of 5.79 m (planner reaction variance). The dashed line marks the dart-out spawn distance of 8 m used in subsequent experiments.",
+     "Figure 5-3. Stopping-distance model d = vτ + v²/2a (τ=1.5 s, a=3.5 m/s²) and the measured avoidance/collision boundaries from the distance ladder (shaded bands). The measured boundary at 4.2 m/s (8–11 m) matches the model prediction of 8.8 m, and the boundary at 3.0 m/s (7–8 m) is conservative relative to the prediction of 5.79 m (planner reaction variance). The dashed line marks the dart-out spawn distance of 8 m used in subsequent experiments.",
      "fig5_2sd",
      "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig8_stopdist.png",
      null,
@@ -1970,7 +1992,7 @@
     "i": 9,
     "kind": "fig",
     "fields": [
-     "Figure 5-3. Kaplan–Meier curve of lane clearance for no-collision evacuation cases (first-round ablation sample, conditional n=13). With 6 observed departures (median 11.0 s) and 7 right-censored cases (|), the final survival is 0.538, so the median exceeds the observation horizon (20 s). Computed identically to the time-distribution rules of Table 5-6.",
+     "Figure 5-4. Kaplan–Meier curve of lane clearance for no-collision evacuation cases (first-round ablation sample, conditional n=13). With 6 observed departures (median 11.0 s) and 7 right-censored cases (|), the final survival is 0.538, so the median exceeds the observation horizon (20 s). Computed identically to the time-distribution rules of Table 5-6.",
      "fig5_6km",
      "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig9_km.png",
      null,
@@ -1989,7 +2011,18 @@
     "i": 11,
     "kind": "p",
     "fields": [
-     "Splitting the encounter outcomes of the same capped evacuation policy (A4-type) by time regime yields a sharp contrast: launches in the detection+3 s transient (deceleration incomplete) collided in 11/20, whereas launches in settled cruise with deceleration complete (3.0 m/s restart cruise, 8 m encounter re-experiment) had 0/8 collisions."
+     "Splitting the encounter outcomes of the same capped evacuation policy (A4-type) by time regime yields a sharp contrast (Figure 5-5): launches in the detection+3 s transient (deceleration incomplete) collided in 11/20, whereas launches in settled cruise with deceleration complete (3.0 m/s restart cruise, 8 m encounter re-experiment) had 0/8 collisions."
+    ]
+   },
+   {
+    "i": -1,
+    "kind": "fig",
+    "fields": [
+     "Figure 5-5. Ablation results (ledger verdicts, pooled n = 20). (a) Collision/avoidance decomposition of the four arms — launched in the detection + 3 s transient. (b) The same capped (3.0 m/s) evacuation policy in two regimes — 11/20 in the transient versus 0/8 in settled cruise.",
+     "fig5_5ab",
+     "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig10_ablation.png",
+     null,
+     14.5
     ]
    },
    {
