@@ -55,15 +55,14 @@ m = 22
 ax.set_xlim(allx.min() - m, allx.max() + m)
 ax.set_ylim(ally.min() - m, ally.max() + m)
 ax.set_xlabel("x [m]"); ax.set_ylabel("y [m]")
+route_len = float(np.hypot(np.diff(px), np.diff(py)).sum())
 h = [MPoly([(0, 0)] * 3, fc=st.RED, alpha=0.85, ec="black",
            label=f"shoulder candidates ({len(shc)}, lanelets)"),
      plt.Line2D([], [], marker="s", ls="none", ms=4.5, mfc=st.BLUE, mec="black",
                 label=f"parking-lot candidates ({len(pkc)}, polygons)"),
-     plt.Line2D([], [], color=st.GRAY, lw=0.9, ls=(0, (4, 2)), label="reference route")]
+     plt.Line2D([], [], color=st.GRAY, lw=0.9, ls=(0, (4, 2)),
+                label=f"reference route ({route_len:.0f} m)")]
 ax.legend(handles=h, loc="lower left", fontsize=5.6)
-sx, sy = allx.max() + m - 62, ally.min() - m + 8
-ax.plot([sx, sx + 50], [sy, sy], color="black", lw=1.6)
-ax.text(sx + 25, sy + 4, "50 m", ha="center", fontsize=6.5)
 st.clean_axes(ax)
 plt.savefig(OUT)
 print("saved", len(shc), "shoulder,", len(pkc), "parking")
