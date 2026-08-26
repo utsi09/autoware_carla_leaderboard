@@ -482,11 +482,11 @@
     "i": 2,
     "kind": "fig",
     "fields": [
-     "Figure 3-1. Architecture of the proposed system. Sensor faults are injected upstream (at the bridge) of the CARLA–bridge–Autoware closed loop, and the supervisory layer (labeled CDR Monitor = cdr_monitor and MRM Supervisor = mrm_supervisor in the figure) is attached as an add-on layer. The monitoring module subscribes read-only to sensor topics and publishes health scores, and the supervisor intervenes in the execution layer through route resetting and a speed cap (evacuation) or diagnostic ERROR injection (deferral).",
+     "Figure 3-1. Dual-channel structure of the proposed system. Left: the nominal driving channel of unmodified Autoware 0.39.0 (perception & localization → planning → control); right: the add-on fail-safe channel (figure labels CDR Monitor = cdr_monitor, MRM Supervisor = mrm_supervisor). The monitoring stage subscribes read-only to the sensor topics and produces health/capability scores; the decision stage selects MOVE (evacuate — reroute with a speed cap) or DEFER (delegate — inject a diagnostic ERROR) via the dual-threshold check and refuge-candidate search; the minimal-risk condition is a shoulder/parking-lot stop or the stock in-lane stop. Dead sensors are decided through the hard-fail fast path (Chapter 3, Section 5).",
      "fig3_1",
-     "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig2_arch.png",
+     "/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig2b_dualchannel.png",
      null,
-     11.5
+     15.0
     ]
    },
    {

@@ -4,7 +4,7 @@
 CH3 = [
 ('ch', '제 3 장  제안 시스템', 'ch3'),
 ('sec', '1. 시스템 구조', 'ch3s1'),
-('fig', '그림 3-1. 제안 시스템의 구조. CARLA-브리지-Autoware 폐루프의 상류(브리지)에서 센서 고장이 주입되고, 감독 계층(그림 표기 CDR Monitor = cdr_monitor, MRM Supervisor = mrm_supervisor)이 부가(add-on)로 부착된다. 감시 모듈이 센서 토픽을 읽기 전용 구독해 건강 점수를 발행하면, 감독자가 경로 재설정·속도 상한(대피) 또는 진단 ERROR 주입(위임)으로 실행 계층에 개입한다.', 'fig3_1', '/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig2_arch.png', None, 11.5),
+('fig', '그림 3-1. 제안 시스템의 이중 채널 구조. 좌측은 무수정 Autoware 0.39.0의 정상 주행 채널(인지·측위 → 계획 → 제어), 우측은 부가(add-on) 안전 채널이다(그림 표기 CDR Monitor = cdr_monitor, MRM Supervisor = mrm_supervisor). 감시 단계는 센서 토픽을 읽기 전용 구독해 건강·능력 점수를 산출하고, 판단 단계는 이중 임계 확인과 대피 후보 탐색으로 MOVE(대피 — 경로 재설정·속도 상한)/DEFER(위임 — 진단 ERROR 주입)를 선택하며, 최소위험상태(MRC)는 갓길·주차장 정차 또는 순정 차선 내 정지로 귀결된다. 죽은 센서는 하드페일 고속경로로 즉시 판정된다(제3장 5절).', 'fig3_1', '/home/taewook/autoware_carla_leaderboard/doc/paper_build/figs/fig2b_dualchannel.png', None, 15.0),
 ('p', '제안 시스템은 두 개의 독립 노드로 구성된다(그림 3-1). 감시 모듈 cdr_monitor는 행동트리 기반으로(행동트리는 알고리즘적 기여가 아니라 병렬 구성·모듈 교체·실행 추적을 위한 구현 구조이다) 10 Hz로 각 센서를 점검하여 센서별 건강 점수(0~1)를 산출·발행하며, 감지기는 타임아웃(신선도)·품질(노이즈·유효율)·물리(잔차·바이어스) 3종 계열로 구성된다. 감독자 mrm_supervisor는 점수를 구독해 상태기계를 운용하며, 대피 시 Autoware AD API로 경로를 변경하고 계획 계층에 속도 상한을 부과하며, 위임 시 진단 그래프로 순정 mrm_handler의 정차를 발동시킨다. 정차 기동의 실행은 goal_planner·mrm_handler가 담당하며, 진단 그래프에 감시 유닛을 주입하는 방식으로 본체 수정을 최소화한다.'),
 ('p', '수신과 평가의 주기를 분리한다: 수신은 센서 고유 주기(라이다 20 Hz, IMU 100 Hz 등)로 적산하고, 평가는 10 Hz로 수행한다(평가 주기 기여 지연 ≤0.1 s). 100 ms 평가 주기는 AUTOSAR Watchdog Manager[7]의 주기적 supervision 구조와 정합하며, Autoware 계획 계층의 판단 주기와도 일치한다.'),
 ('sec', '2. 센서 점수화', 'ch3s2'),
