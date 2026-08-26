@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""fig_candidates_map_en.png — MRM candidate map drawn from the actual lanelet2 map
-(0826: real road geometry instead of the CARLA aerial capture; shoulder/parking
-candidates distinguished by fill color; junction markers dropped; route kept)."""
+"""fig_candidates_map_en.png — MRM candidate map on the CARLA aerial capture.
+0826: back to the aerial-background version, but shoulder candidates are drawn as
+their actual lanelet polygons (red) instead of dot markers; parking lots as in the
+initial version (blue polygon + square marker); junction markers removed."""
 import sys, csv
 import numpy as np
 import matplotlib
@@ -19,64 +20,50 @@ OUT = "/home/taewook/autoware_carla_leaderboard/doc/figs/en/fig_candidates_map_e
 
 mm = MapModel("/home/taewook/awcl_maps/Town07/lanelet2_map.osm")
 cands = mm.extract_candidates(["F", "FR"], ["F", "FL", "FR", "B", "RL", "RR"])
-sh_ids = {c.name.split("_", 1)[1] for c in cands if c.kind == "shoulder"}
-n_sh = len([c for c in cands if c.kind == "shoulder"])
-n_pk = len([c for c in cands if c.kind == "parking_lot"])
+shc = [c for c in cands if c.kind == "shoulder"]
+pkc = [c for c in cands if c.kind == "parking_lot"]
+sh_ids = {c.name.split("_", 1)[1] for c in shc}
+
+mp = np.load(f"{R}/town07_ros_aligned.npz")
+T = mp["img"]; ext = list(mp["extent"])
+Tl = (T.astype(float) * 0.60 + 255 * 0.40).astype(np.uint8)
 
 rows = [r for r in csv.DictReader(open(f"{R}/ego_path_nf.csv")) if r["src"] == "kin"]
 px = np.array([float(r["x"]) for r in rows])
 py = np.array([float(r["y"]) for r in rows])
 
-C_ROAD = "#e2e4e8"; C_ROAD_EC = "#c8cbd2"
-C_SH = "#c65b4e"; C_SH_OTHER = "#d8b8b2"
-C_PK = "#5b7fa6"
-
-fig, ax = plt.subplots(figsize=(3.5, 4.2))
-for lid, ll in mm.lanelets.items():
+fig, ax = plt.subplots(figsize=(3.5, 4.5))
+ax.imshow(Tl, extent=ext, origin="lower", interpolation="bilinear")
+ax.plot(px, py, color=st.GRAY, lw=0.9, ls=(0, (4, 2)))
+for name, pts in mm.parking_lots.items():
+    ax.add_patch(MPoly(np.array(pts), closed=True, facecolor=st.BLUE, alpha=0.25,
+                       edgecolor=st.BLUE, lw=0.7))
+# shoulder candidates: actual lanelet polygons (left bound + reversed right bound)
+for lid in sh_ids:
+    ll = mm.lanelets[lid]
     lp, rp = mm._ways.get(ll["left"]), mm._ways.get(ll["right"])
     if not lp or not rp:
         continue
-    poly = list(lp) + list(reversed(rp))
-    if ll["subtype"] == "road":
-        ax.add_patch(MPoly(poly, closed=True, fc=C_ROAD, ec=C_ROAD_EC, lw=0.3, zorder=1))
-    elif ll["subtype"] == "road_shoulder":
-        cand = lid in sh_ids
-        ax.add_patch(MPoly(poly, closed=True,
-                           fc=(C_SH if cand else C_SH_OTHER),
-                           ec="black", lw=0.35 if cand else 0.2,
-                           alpha=0.95, zorder=2))
-for wid, pts in mm.parking_lots.items():
-    ax.add_patch(MPoly(pts, closed=True, fc=C_PK, ec="black", lw=0.4, alpha=0.75, zorder=2))
-# parking_space는 2점 축선 — 실제 주차선처럼 폭 2.5 m 칸 사각형 외곽선으로 그린다
-BAY_HALF_W = 1.25
-for wid, pts in mm.parking_spaces.items():
-    (x0, y0), (x1, y1) = pts[0], pts[-1]
-    L = np.hypot(x1 - x0, y1 - y0)
-    if L < 0.5:
-        continue
-    nx, ny = -(y1 - y0) / L * BAY_HALF_W, (x1 - x0) / L * BAY_HALF_W
-    bay = [(x0 + nx, y0 + ny), (x1 + nx, y1 + ny),
-           (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)]
-    ax.add_patch(MPoly(bay, closed=True, fc="none", ec="white", lw=0.55,
-                       alpha=0.95, zorder=3))
+    ax.add_patch(MPoly(list(lp) + list(reversed(rp)), closed=True,
+                       facecolor=st.RED, alpha=0.85, edgecolor="black", lw=0.4, zorder=3))
+for c in pkc:
+    ax.plot(c.x, c.y, marker="s", ms=4, mfc=st.BLUE, mec="black", mew=0.5, ls="none")
 
-ax.plot(px, py, color="#3a3a44", lw=1.0, ls=(0, (4, 2)), zorder=4)
-
-m = 25
-ax.set_xlim(px.min() - m, px.max() + m)
-ax.set_ylim(py.min() - m, py.max() + m)
-ax.set_aspect("equal")
+allx = np.concatenate([px, [c.x for c in cands]])
+ally = np.concatenate([py, [c.y for c in cands]])
+m = 22
+ax.set_xlim(allx.min() - m, allx.max() + m)
+ax.set_ylim(ally.min() - m, ally.max() + m)
 ax.set_xlabel("x [m]"); ax.set_ylabel("y [m]")
-
-h = [MPoly([(0, 0)] * 3, fc=C_ROAD, ec=C_ROAD_EC, label="road lanelets"),
-     MPoly([(0, 0)] * 3, fc=C_SH, ec="black", label=f"shoulder candidates ({n_sh})"),
-     MPoly([(0, 0)] * 3, fc=C_PK, ec="black", alpha=0.75, label=f"parking-lot candidates ({n_pk})"),
-     plt.Line2D([], [], color="#3a3a44", lw=1.0, ls=(0, (4, 2)), label="reference route")]
-ax.legend(handles=h, loc="lower left", fontsize=6.2, handletextpad=0.5, framealpha=0.9)
-
-sx, sy = px.max() + m - 62, py.min() - m + 9
+h = [MPoly([(0, 0)] * 3, fc=st.RED, alpha=0.85, ec="black",
+           label=f"shoulder candidates ({len(shc)}, lanelets)"),
+     plt.Line2D([], [], marker="s", ls="none", ms=4.5, mfc=st.BLUE, mec="black",
+                label=f"parking-lot candidates ({len(pkc)}, polygons)"),
+     plt.Line2D([], [], color=st.GRAY, lw=0.9, ls=(0, (4, 2)), label="reference route")]
+ax.legend(handles=h, loc="lower left", fontsize=5.6)
+sx, sy = allx.max() + m - 62, ally.min() - m + 8
 ax.plot([sx, sx + 50], [sy, sy], color="black", lw=1.6)
 ax.text(sx + 25, sy + 4, "50 m", ha="center", fontsize=6.5)
 st.clean_axes(ax)
 plt.savefig(OUT)
-print("saved", n_sh, "shoulder,", n_pk, "parking")
+print("saved", len(shc), "shoulder,", len(pkc), "parking")
