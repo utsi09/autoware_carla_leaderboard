@@ -2,7 +2,7 @@
 import json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PDF = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v25_0827.pdf'
+PDF = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v26_0827.pdf'
 
 txt = subprocess.run(['pdftotext', '-layout', PDF, '-'],
                      capture_output=True, text=True).stdout
