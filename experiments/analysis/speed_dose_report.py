@@ -43,37 +43,47 @@ def load():
             if len(p) >= 4 and p[1].startswith('sd-') and p[2] == 'RAW-HIT' \
                     and 'walker' in p[3]:
                 raw[p[1]] = raw.get(p[1], 0) + 1
-    # 태그별 마지막 원장 행
-    led = OrderedDict()
+    # 보조: 워커측 원장 (회피 런은 주입기 최종 행이 cleanup kill로 소실 —
+    # 0827 실측: 누락 36셀 전부 회피 예상 셀. 참고용으로만 유지)
+    led = {}
     with open(f'{R}/encounter_metrics.csv') as f:
         for row in csv.reader(f):
             if len(row) >= 4 and row[1].startswith('sd-'):
                 led[row[1]] = row
-    # progress: 채택 여부·첫 틱 속도
+    # 기준 모집단 = 채택 장부 (adopted==1). 채택 조건이 이미 발사+밴드+전방성
+    # 검증이므로 NO-ENCOUNTER 없음. 판정 = 에고 RAW-HIT(>0 충돌 / 0 회피)
+    # + 틱 최소간격을 회피 근거로 첨부.
     prog = {}
     with open(f'{R}/speed_dose_progress.csv') as f:
         for r in csv.DictReader(f):
-            prog[r['tag']] = r      # 마지막 시도 행이 남음
+            if r['adopted'] == '1':
+                prog[r['tag']] = r
     out = {}
-    for tag, row in led.items():
-        _, _, mg, contact = row[0], row[1], row[2], row[3]
+    for tag, pr in prog.items():
         p = tag.split('-')          # sd,S12,c42,d8
         seed, cap, dist = p[1], p[2][1:], p[3][1:]
         cap = f'{cap[0]}.{cap[1]}'
         if seed.startswith('D'):
             continue                # 개발 시드 제외 (사전등록)
-        pr = prog.get(tag, {})
-        adopted = pr.get('adopted') == '1'
         hits = raw.get(tag, 0)
-        if contact == 'NO-ENCOUNTER' or not adopted:
-            verdict = 'INVALID'
-        elif hits > 0:
-            verdict = 'COLLIDE'          # 에고 RAW-HIT가 1차 판정
-        else:
-            verdict = 'AVOID'
+        mg = ''
+        tk = pr.get('tick', '')
+        if tk and os.path.exists(f'{R}/{tk}'):
+            gaps = []
+            with open(f'{R}/{tk}') as tf:
+                for tr_ in csv.DictReader(tf):
+                    try:
+                        if float(tr_['ped_x']) != 0.0:
+                            gaps.append(float(tr_['gap']))
+                    except Exception:
+                        pass
+            if gaps:
+                mg = f'{min(gaps):.2f}'
+        verdict = 'COLLIDE' if hits > 0 else ('AVOID' if mg else 'INVALID')
         out[(seed, cap, dist)] = dict(verdict=verdict, min_gap=mg,
                                       first_v=pr.get('first_v', ''),
-                                      contact=contact, hits=hits)
+                                      contact=led.get(tag, ['', '', '', ''])[3],
+                                      hits=hits)
     return out
 
 def main():
