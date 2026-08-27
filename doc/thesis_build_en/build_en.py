@@ -20,7 +20,7 @@ from content1 import (TITLE_KO_L1, TITLE_KO_L2, TITLE_KO_L3,
 from content3 import REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/autoware_carla_leaderboard/doc/templates/skku_ko_template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v22_0827.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v23_0827.docx'
 FONT_EA = 'HY신명조'
 FONT_LAT = 'Times New Roman'
 
@@ -91,9 +91,9 @@ def caption_para(doc, caption):
     pf.line_spacing = 1.3
     pf.space_before = Pt(2); pf.space_after = Pt(0)
     head, sep, rest = caption.partition('. ')
-    style_run(p.add_run(head + sep), size=9.5, bold=True)
+    style_run(p.add_run(head + sep), size=9.0, bold=True)
     if rest:
-        style_run(p.add_run(rest), size=9.5)
+        style_run(p.add_run(rest), size=9.0)
     return p
 
 ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0', 'tbl4_3'}
@@ -125,9 +125,9 @@ def add_table(doc, caption, key, rows, note):
                 cp.alignment = WD_ALIGN_PARAGRAPH.CENTER if ri == 0 else WD_ALIGN_PARAGRAPH.LEFT
                 if keep_whole and ri < len(rows) - 1:
                     cp.paragraph_format.keep_with_next = True
-                style_run(cp.add_run(line), size=9.5, bold=(ri == 0))
+                style_run(cp.add_run(line), size=9.0, bold=(ri == 0))
     if note:
-        n = para(doc, note, size=9.5)
+        n = para(doc, note, size=9.0)
         n.paragraph_format.line_spacing = 1.3
     para(doc)
 
@@ -147,7 +147,7 @@ def add_figure(doc, caption, key, path, note, width_cm=None):
     cap = caption_para(doc, caption)
     cap.paragraph_format.keep_together = True
     if note:
-        n = para(doc, note, size=9.5)
+        n = para(doc, note, size=9.0)
         n.paragraph_format.line_spacing = 1.3
     para(doc)
 

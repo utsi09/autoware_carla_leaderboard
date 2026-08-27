@@ -2,7 +2,7 @@
 import json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PDF = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v22_0827.pdf'
+PDF = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v23_0827.pdf'
 
 txt = subprocess.run(['pdftotext', '-layout', PDF, '-'],
                      capture_output=True, text=True).stdout
@@ -36,6 +36,13 @@ for key, text in keys.items():
         if needle in npages[i]:
             found = i - body_start + 1
             break
+    if found is None and len(needle) > 24:
+        # 제목이 페이지 경계에서 갈리는 경우: 앞 24자 접두로 재시도
+        pre = needle[:24]
+        for i in range(body_start, len(npages)):
+            if pre in npages[i]:
+                found = i - body_start + 1
+                break
     if found:
         pagemap[key] = str(found)
     else:

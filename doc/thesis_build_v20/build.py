@@ -15,7 +15,7 @@ from content2 import CH3, CH4
 from content3 import CH5, CH6, CH7, REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/.claude/uploads/3a654bb5-ccec-4bf3-a05d-7c11727be86b/1750d3b5-___011.____________Word_Masters_Template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v22_0827.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v23_0827.docx'
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = 'HY신명조'
 
@@ -92,9 +92,9 @@ def caption_para(doc, caption):
     pf.line_spacing = 1.3
     pf.space_before = Pt(2); pf.space_after = Pt(0)
     head, sep, rest = caption.partition('. ')
-    style_run(p.add_run(head + sep), size=9.5, bold=True)
+    style_run(p.add_run(head + sep), size=9.0, bold=True)
     if rest:
-        style_run(p.add_run(rest), size=9.5)
+        style_run(p.add_run(rest), size=9.0)
     return p
 
 ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0'}
@@ -126,9 +126,9 @@ def add_table(doc, caption, key, rows, note):
                 cp.alignment = WD_ALIGN_PARAGRAPH.CENTER if ri == 0 else WD_ALIGN_PARAGRAPH.LEFT
                 if keep_whole and ri < len(rows) - 1:
                     cp.paragraph_format.keep_with_next = True
-                style_run(cp.add_run(line), size=9.5, bold=(ri == 0))
+                style_run(cp.add_run(line), size=9.0, bold=(ri == 0))
     if note:
-        n = para(doc, note, size=9.5)
+        n = para(doc, note, size=9.0)
         n.paragraph_format.line_spacing = 1.3
     para(doc)
 
@@ -151,7 +151,7 @@ def add_figure(doc, caption, key, path, note, width_cm=None):
     cap = caption_para(doc, caption)
     cap.paragraph_format.keep_together = True  # 캡션 쪽 넘김 분할 방지
     if note:
-        n = para(doc, note, size=9.5)
+        n = para(doc, note, size=9.0)
         n.paragraph_format.line_spacing = 1.3
     para(doc)
 
