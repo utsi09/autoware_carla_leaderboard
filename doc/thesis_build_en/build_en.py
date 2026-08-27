@@ -20,7 +20,7 @@ from content1 import (TITLE_KO_L1, TITLE_KO_L2, TITLE_KO_L3,
 from content3 import REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/autoware_carla_leaderboard/doc/templates/skku_ko_template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v27_0827.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v28_0827.docx'
 FONT_EA = 'HY신명조'
 FONT_LAT = 'Times New Roman'
 
@@ -96,7 +96,7 @@ def caption_para(doc, caption):
         style_run(p.add_run(rest), size=9.0)
     return p
 
-ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0', 'tbl4_3'}
+ALLOW_SPLIT = {'tbl2_1', 'tbl5_0', 'tbl4_3'}
 
 def add_table(doc, caption, key, rows, note):
     keys[key] = caption.split('. ')[0]

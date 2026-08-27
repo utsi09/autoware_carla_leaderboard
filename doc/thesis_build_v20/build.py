@@ -15,7 +15,7 @@ from content2 import CH3, CH4
 from content3 import CH5, CH6, CH7, REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/.claude/uploads/3a654bb5-ccec-4bf3-a05d-7c11727be86b/1750d3b5-___011.____________Word_Masters_Template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v27_0827.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v28_0827.docx'
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = 'HY신명조'
 
@@ -97,7 +97,7 @@ def caption_para(doc, caption):
         style_run(p.add_run(rest), size=9.0)
     return p
 
-ALLOW_SPLIT = {'tbl2_1', 'tbl5_3b', 'tbl5_0'}
+ALLOW_SPLIT = {'tbl2_1', 'tbl5_0'}
 
 def add_table(doc, caption, key, rows, note):
     keys[key] = caption.split('. ')[0]
