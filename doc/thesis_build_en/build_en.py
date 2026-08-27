@@ -20,7 +20,7 @@ from content1 import (TITLE_KO_L1, TITLE_KO_L2, TITLE_KO_L3,
 from content3 import REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/autoware_carla_leaderboard/doc/templates/skku_ko_template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v24_0827.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_en_v25_0827.docx'
 FONT_EA = 'HY신명조'
 FONT_LAT = 'Times New Roman'
 
