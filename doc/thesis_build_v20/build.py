@@ -15,7 +15,7 @@ from content2 import CH3, CH4
 from content3 import CH5, CH6, CH7, REFS, ABSTRACT_EN, ABSTRACT_KEYWORDS
 
 TEMPLATE = '/home/taewook/.claude/uploads/3a654bb5-ccec-4bf3-a05d-7c11727be86b/1750d3b5-___011.____________Word_Masters_Template.docx'
-OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v29_0828.docx'
+OUT = '/home/taewook/autoware_carla_leaderboard/doc/thesis_v31_0829.docx'
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = 'HY신명조'
 
@@ -77,12 +77,35 @@ def section(doc, title, key=None):
 def subsection(doc, title):
     para(doc, title, size=11, bold=True)
 
+# 수식: LaTeX→OMML(Word 수식)로 렌더 — 텍스트 수식 깨짐 방지 (v31)
+import latex2mathml.converter as _l2m
+import mathml2omml as _m2o
+from lxml import etree as _etree
+_M_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
+EQ_LATEX = {
+ '(3-1)': r'\mathrm{timeout\ score}=\max(0,\ 1-\mathrm{age}/\tau_{\mathrm{detect}})',
+ '(3-2)': r'\sigma_{\mathrm{est}}=\mathrm{mean}(|\Delta r|)\times(\sqrt{\pi}/2),\quad |\Delta r|<1\,\mathrm{m}',
+ '(3-3)': r'\mathrm{sector}=1-\prod_i(1-s_i)',
+ '(3-4)': r'\mathrm{perception}=\sum_k w_k\cdot \mathrm{sector}_k,\quad w=\{F{:}0.30,\ FL/FR{:}0.15,\ L/R/B{:}0.10,\ RL/RR{:}0.05\}',
+ '(3-5)': r'\mathrm{health}=\min(\mathrm{perception},\ \mathrm{cap}_{\mathrm{loc}})',
+ '(3-6)': r'\tau_{\mathrm{detect}}(t)=\min(\tau_{\mathrm{fresh}},\ \mathrm{TTC}_{\mathrm{cons}}(t))',
+ '(3-7)': r'T_{\mathrm{detect}}+T_{\mathrm{response}}+T_{\mathrm{margin}}\le T_{\mathrm{hazard}}',
+ '(3-8)': r'J(c)=w_t\,\eta(c)+w_{tl}\,n_{tl}(c)\,g(tl)+w_{sec}\sum(1-\mathrm{sector}_{\mathrm{req}})+w_{loc}\,\eta(c)\,(1-\mathrm{loc})',
+ '(3-9)': r'd_{\mathrm{safe}}(v)=v\tau+\frac{v^{2}}{2a}+d_{\mathrm{margin}}\le D_{\mathrm{avail}}',
+}
+
 def equation(doc, text, num):
     p = doc.add_paragraph()
     p.paragraph_format.line_spacing = GRID
     p.paragraph_format.tab_stops.add_tab_stop(Cm(15.0), WD_TAB_ALIGNMENT.RIGHT)
     p.paragraph_format.left_indent = Cm(1.0)
-    style_run(p.add_run(text), size=11)
+    latex = EQ_LATEX.get(num)
+    if latex:
+        mml = _l2m.convert(latex)
+        omml = _m2o.convert(mml).replace('<m:oMath>', '<m:oMath xmlns:m="%s">' % _M_NS, 1)
+        p._p.append(_etree.fromstring(omml))
+    else:
+        style_run(p.add_run(text), size=11)
     style_run(p.add_run('\t' + num), size=11)
 
 # 한 쪽을 초과하는 큰 표는 강제 새 쪽 시작 대신 자연 분할을 허용(머리행 반복)
@@ -97,7 +120,7 @@ def caption_para(doc, caption):
         style_run(p.add_run(rest), size=9.0)
     return p
 
-ALLOW_SPLIT = {'tbl2_1', 'tbl5_0'}
+ALLOW_SPLIT = {'tbl2_1', 'tbl5_0', 'tbl4_3', 'tbl4_acct', 'tbl4_1', 'tbl5_2', 'tbl5_sd', 'tbl5_7'}
 
 def add_table(doc, caption, key, rows, note):
     keys[key] = caption.split('. ')[0]
