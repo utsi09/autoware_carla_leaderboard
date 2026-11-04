@@ -11,8 +11,8 @@
   queued       최종 정지 때 앞 15 m 안에 정지/저속 차량
   frozen_light 신호 앞 정지 뒤 초록이 5 s 이상 켜졌는데도 못 출발
   red_wait     신호 앞 정지, 초록이 오기 전에 케이스 종료(판단 불가)
-  frozen       신호·앞차 없이 100 s 이상 정지, MRM 없음
-  crawl        고장 뒤 1 m/s 미만(적신호 제외) 누적 30 s 이상 + 2 m 이상 전진, 위 어디에도 안 들어감
+  crawl        고장→최종 정지 사이(적신호 정차 시간 제외) 30 s 이상이면서 평균 속도 < 1 m/s, 2 m 이상 전진 (정상 ≈ 1.3~2 m/s)
+  frozen       신호·앞차 없이 서서 케이스 끝까지(≥60 s) 안 움직임, MRM 없음
   other        그 밖
 부가 플래그: injected_at_standstill(주입 순간 정지 상태), stutter(정지→재출발 3회 이상), missed_green
 """
@@ -103,7 +103,8 @@ def analyse(gt_path):
     for a, b in zip(post, post[1:]):
         dist += math.hypot(float(b["x"]) - float(a["x"]), float(b["y"]) - float(a["y"]))
     out["moved_m"] = round(dist, 1)
-    slow = [r for r in post if float(r["speed"]) < SLOW_V and r["tl"] != "R"]
+    # 기어감 판정용: 고장 → 최종 정지 사이('활동 구간')에서 적신호 대기(빨강+정지)를 뺀 시간과 이동 거리
+    slow = [r for r in post if STOP_V <= float(r["speed"]) < SLOW_V and r["tl"] != "R"]
     out["slow_s"] = round(len(slow) / 20.0, 1)
     # 최종 정지
     t_stop = None
@@ -131,6 +132,15 @@ def analyse(gt_path):
             if g >= 100: missed_green = 1; break      # 초록 5 s 이상인데 안 움직임
     out["tl_at_stop"] = tl_stop; out["lead_m"] = lead[0] if lead else ""; out["rear_m"] = rear if rear else ""
     out["missed_green"] = missed_green
+    # 활동 구간 평균 속도 (적신호 정차 시간 제외): 정상 주행 ≈ 1.3~2 m/s, 기어감 < 1 m/s
+    act = [r for r in post if (float(r["aw_sec"]) < float(t_stop) if t_stop else True)]
+    act_move = 0.0
+    for a, b in zip(act, act[1:]):
+        act_move += math.hypot(float(b["x"]) - float(a["x"]), float(b["y"]) - float(a["y"]))
+    red_wait_s = sum(1 for r in act if r["tl"] == "R" and float(r["speed"]) < STOP_V) / 20.0
+    act_s = max(0.0, len(act) / 20.0 - red_wait_s)
+    out["active_s"] = round(act_s, 1); out["active_v_mean"] = round(act_move / act_s, 2) if act_s > 0 else ""
+    is_crawl = act_s >= CRAWL_S and act_move >= 2 and act_move / act_s < SLOW_V
     # stutter: 정지(2 s 이상) -> 재출발 횟수
     stops = 0; in_stop = 0
     for r in post:
@@ -151,18 +161,18 @@ def analyse(gt_path):
         cls = "drove_on"
     elif t_stop and lead and lead[1] < 1.0:
         cls = "queued"
+    elif is_crawl:
+        cls = "crawl"                         # 활동 구간 평균 < 1 m/s 로 꾸물거림 (뒤에 굳었더라도 기어감으로 센다)
     elif t_stop and tl_stop in ("R", "Y") and missed_green:
         cls = "frozen_light"
-    elif t_stop and tl_stop in ("R", "Y") and stopped_s < FROZEN_S:
-        cls = "red_wait"
-    elif t_stop and stopped_s >= FROZEN_S and tl_stop in ("-", "G", ""):
-        cls = "frozen"
     elif t_stop and tl_stop in ("R", "Y"):
-        cls = "red_wait"
-    elif out["slow_s"] >= CRAWL_S and out["moved_m"] >= 2:
-        cls = "crawl"
+        cls = "red_wait"                      # 초록이 오기 전에 케이스가 끝남 → 판단 불가
+    elif t_stop and (out["judge"] == "HAZARD_STOPPED" or stopped_s >= 60) and tl_stop in ("-", "G", ""):
+        cls = "frozen"                        # 신호·앞차 없이 서서 케이스 끝까지 안 움직임
     else:
         cls = "other"
+    out["crawl_flag"] = int(is_crawl)
+    out["frozen_flag"] = int(bool(t_stop) and stopped_s >= 60 and tl_stop in ("-", "G", "") and out["goal_dist_m"] > 30)
     if out.get("no_fault"): cls = "drove_on" if out["goal_dist_m"] <= 30 else cls
     out["cls"] = cls
     return out
