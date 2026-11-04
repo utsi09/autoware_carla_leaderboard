@@ -239,6 +239,11 @@ def main():
     paths = sorted(glob.glob(str(RES / "gt" / "stock-*.csv")))
     if len(sys.argv) > 1:
         paths = [p for p in paths if any(a in p for a in sys.argv[1:])]
+    # 같은 셀을 두 번 돌린 경우(중단·재실행) 가장 최근 파일만 (파일명 끝 stamp 가 시간순)
+    latest = {}
+    for p in paths:
+        latest["-".join(Path(p).stem.split("-")[:5])] = p
+    paths = sorted(latest.values())
     rows = []
     for p in paths:
         try:
