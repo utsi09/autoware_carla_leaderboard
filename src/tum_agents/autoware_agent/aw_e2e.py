@@ -1012,6 +1012,10 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         # gb: during a GNSS blackout the pose is simply not published
         if not self._gnss_blackout:
             self._gnss_pose_pub.publish(ndt_pose_msg)
+            # [eagleye 2026-11] env EAGLEYE_GNSS=1: NavSatFix + ECEF velocity for Autoware's
+            # Eagleye pose source. Same (noisy) position as the GNSS pose above, converted with
+            # the map's TransverseMercator(0,0,k=1) projector (awcl_maps/Town07_tmerc).
+            self._publish_eagleye_gnss(aw_time, ndt_pose_msg.pose.pose.position)
 
         # Steering Angle
         steering_angle = self._awp_converter._get_steering()
@@ -1446,6 +1450,57 @@ class AutowareE2EAgent(TUMROSBaseAgent):
     # One row per tick for the ego + one row per vehicle/walker within 80 m.
     # Coordinates are converted to the Autoware map frame exactly like the
     # GNSS pose (y -> -y, yaw -> -yaw) so they match /perception and EKF output.
+    def _publish_eagleye_gnss(self, aw_time, pos):
+        if not hasattr(self, "_eg_on"):
+            import os as _os
+            self._eg_on = _os.environ.get("EAGLEYE_GNSS", "") == "1"
+            if self._eg_on:
+                try:
+                    from pyproj import Transformer, CRS
+                    _tm = CRS.from_proj4("+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 "
+                                         "+ellps=WGS84 +units=m +no_defs")
+                    self._eg_inv = Transformer.from_crs(_tm, CRS.from_epsg(4326), always_xy=True)
+                    self._eg_fix_pub = self.ros_node.create_publisher(
+                        NavSatFix, "/sensing/gnss/nav_sat_fix",
+                        qos_profile=QoSProfile(depth=1, durability=DurabilityPolicy.VOLATILE))
+                    self._eg_vel_pub = self.ros_node.create_publisher(
+                        TwistWithCovarianceStamped, "/sensing/gnss/ecef_velocity",
+                        qos_profile=QoSProfile(depth=1, durability=DurabilityPolicy.VOLATILE))
+                    print("[EAGLEYE GNSS] publishing /sensing/gnss/nav_sat_fix + /sensing/gnss/ecef_velocity")
+                except Exception as e:
+                    print("[EAGLEYE GNSS] init failed:", e)
+                    self._eg_on = False
+        if not self._eg_on:
+            return
+        try:
+            lon, lat = self._eg_inv.transform(pos.x, pos.y)
+            fix = NavSatFix()
+            fix.header.stamp = aw_time
+            fix.header.frame_id = "gnss_link"
+            fix.status.status = 2          # GBAS/RTK-like fix
+            fix.status.service = 1
+            fix.latitude, fix.longitude, fix.altitude = float(lat), float(lon), float(pos.z)
+            fix.position_covariance = [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.04]
+            fix.position_covariance_type = 2
+            # ENU velocity from CARLA ground truth (Autoware map x=east, y=north)
+            v = self._vehicle.get_velocity()
+            e, n, u = float(v.x), float(-v.y), float(v.z)
+            lam, phi = math.radians(lon), math.radians(lat)
+            sl, cl, sp, cp = math.sin(lam), math.cos(lam), math.sin(phi), math.cos(phi)
+            ecef = TwistWithCovarianceStamped()
+            ecef.header.stamp = aw_time
+            ecef.header.frame_id = "gnss_link"
+            ecef.twist.twist.linear.x = -sl * e - sp * cl * n + cp * cl * u
+            ecef.twist.twist.linear.y = cl * e - sp * sl * n + cp * sl * u
+            ecef.twist.twist.linear.z = cp * n + sp * u
+            ecef.twist.covariance[0] = ecef.twist.covariance[7] = ecef.twist.covariance[14] = 0.01
+            self._eg_fix_pub.publish(fix)      # fix first: the converter latches it for the velocity msg
+            self._eg_vel_pub.publish(ecef)
+        except Exception as e:
+            if not getattr(self, "_eg_err", False):
+                self._eg_err = True
+                print("[EAGLEYE GNSS] publish failed:", e)
+
     def _gt_log_tick(self, aw_time, sim_t, ego_pos):
         if not hasattr(self, "_gt_fh"):
             import os as _os
@@ -1456,7 +1511,7 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                     _os.makedirs(_os.path.dirname(_p), exist_ok=True)
                     self._gt_fh = open(_p, "w", buffering=1 << 16)
                     self._gt_fh.write("sim_t,aw_sec,kind,id,x,y,z,yaw_deg,speed,"
-                                      "length,width,dist,bearing_deg,fault\n")
+                                      "length,width,dist,bearing_deg,fault,tl\n")
                     self._gt_rows = 0
                     print(f"[GT LOG] -> {_p}")
                 except Exception as e:
@@ -1472,9 +1527,14 @@ class AutowareE2EAgent(TUMROSBaseAgent):
             v = self._vehicle.get_velocity()
             espeed = math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
             bb = self._vehicle.bounding_box
+            # 자차에 영향 주는 신호등 상태: R/Y/G, 없으면 - (정지가 적신호 대기인지 구분용)
+            try:
+                tl = str(self._vehicle.get_traffic_light_state()).split(".")[-1][0] if self._vehicle.is_at_traffic_light() else "-"
+            except Exception:
+                tl = "?"
             rows = [f"{sim_t:.3f},{_aw:.3f},ego,{self._vehicle.id},{ex:.3f},{ey:.3f},"
                     f"{ego_pos['position']['z']:.3f},{eyaw:.2f},{espeed:.3f},"
-                    f"{2*bb.extent.x:.2f},{2*bb.extent.y:.2f},0,0,{fault}"]
+                    f"{2*bb.extent.x:.2f},{2*bb.extent.y:.2f},0,0,{fault},{tl}"]
             eyaw_rad = math.radians(eyaw)
             for a in self._world.get_actors():
                 tid = a.type_id
@@ -1497,7 +1557,7 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                 rows.append(f"{sim_t:.3f},{_aw:.3f},{kind},{a.id},{ax:.3f},{ay:.3f},{c.z:.3f},"
                             f"{-atr.rotation.yaw:.2f},{aspeed:.3f},"
                             f"{2*a.bounding_box.extent.x:.2f},{2*a.bounding_box.extent.y:.2f},"
-                            f"{dist:.2f},{bearing:.1f},{fault}")
+                            f"{dist:.2f},{bearing:.1f},{fault},-")
             self._gt_fh.write("\n".join(rows) + "\n")
             self._gt_rows += len(rows)
             if self._gt_rows % 2000 < len(rows):

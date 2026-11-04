@@ -129,7 +129,7 @@ def read_gt(path):
             t = round(float(r["aw_sec"]), 3)
             if t < 0:
                 continue
-            d = {k: (float(v) if k not in ("kind", "id") else v) for k, v in r.items()}
+            d = {k: (float(v) if k not in ("kind", "id", "tl") else v) for k, v in r.items()}
             d["id"] = int(d["id"])
             if r["kind"] == "ego":
                 ego[t] = d

@@ -102,6 +102,12 @@ BAG_TOPICS = [
     "/monitor/scores",
     "/fault_injection/active",
     "/vehicle/status/velocity_status",
+    "/vehicle/status/steering_status",
+    "/system/fail_safe/mrm_state",
+    "/system/operation_mode/state",
+    "/planning/mission_planning/route_state",
+    "/control/command/control_cmd",
+    "/diagnostics_graph/status",
     "/clock",
 ]
 
@@ -169,10 +175,12 @@ def build_cases(args):
         return cases
     if args.sev_value:
         # [noise-capability] 스윕용: 심각도 값을 문자열 그대로 (예 "0.2:90", "10:2100", "0.25")
+        _reps = ([args.rep] if args.rep is not None
+                 else range(args.reps if args.reps is not None else 1))
         return [{"method": m, "fault": args.fault, "sev": args.sev_value,
                  "t": args.t if args.t is not None else 10,
                  "npc": args.npc or "def", "rep": r}
-                for r in range(args.reps if args.reps is not None else 1)
+                for r in _reps
                 for m in methods]
     if args.smoke:
         return [{"method": m,
@@ -186,9 +194,10 @@ def build_cases(args):
     fault_kinds = FAULT_KINDS + [f for f in EXTRA_FAULT_KINDS if f == args.fault]
     # 밀도 스타일(none/low/high)도 --npc 로 명시했을 때만 매트릭스에 합류
     npc_styles = NPC_STYLES + [s for s in EXTRA_NPC_STYLES if s == args.npc]
+    _rep_range = ([args.rep] if args.rep is not None
+                  else range(args.reps if args.reps is not None else REPEATS))
     for fault, sev, npc, rep, method in itertools.product(
-            fault_kinds, SEV_LEVELS, npc_styles,
-            range(args.reps if args.reps is not None else REPEATS), methods):
+            fault_kinds, SEV_LEVELS, npc_styles, _rep_range, methods):
         if fault in NO_SEVERITY and sev != "mid":
             continue  # destruction faults have no severity dimension
         # reproducible per-cell draw, identical for ours/baseline (paired)
@@ -258,7 +267,7 @@ class Procs:
         # -u matches the user of the manual (working) terminals
         full = ["docker", "exec", "-e", "ROS_DOMAIN_ID=0"]
         # [v5 절제] 시드 env 패스스루 — 오케스트레이터가 케이스별로 설정
-        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL", "GT_LOG"):
+        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL", "GT_LOG", "EAGLEYE_GNSS"):
             _sv = os.environ.get(_sk)
             if _sv:
                 full += ["-e", f"{_sk}={_sv}"]
@@ -319,6 +328,9 @@ class Procs:
         for pat in ["cdr_monitor", "mrm_supervisor", "awcl_adapter", "ros2 launch",
                     "diagnostic_graph_utils dump_node", "dummy_defer"]:
             subprocess.run(["pkill", "-9", "-f", pat], capture_output=True)
+        # [record] 고아 rosbag 기록기는 다음 케이스에서 /rosbag2_recorder 노드 중복 -> Autoware 비상정지(출발 불가).
+        # 위에서 SIGINT 로 정리됐어야 하지만 남아 있으면 강제 종료한다.
+        subprocess.run(["pkill", "-9", "-f", "ros2 bag record"], capture_output=True)
         # the pattern above only matches the `ros2 run` wrapper; killing it -9
         # orphans the actual dump_node binary (path has a slash, not a space),
         # and one orphan per case re-triggers duplicated_node_checker
@@ -1073,9 +1085,12 @@ def run(args):
                     print(f"[runner] disk free {_free_gb:.1f} GB < 15 GB — stopping batch")
                     (OUT_DIR / "DISK_FULL").write_text(f"{datetime.now()} free={_free_gb:.1f}GB\n")
                     break
-                _tag = (f"{case['fault']}-{str(case['sev']).replace(':', '_')}-"
+                _tag = (f"{'eg-' if args.eagleye else ''}{'stock-' if args.mrm_off else ''}"
+                        f"{case['fault']}-{str(case['sev']).replace(':', '_')}-"
                         f"{case['npc']}-r{case['rep']}-{stamp}")
                 os.environ["CASE_TAG"] = _tag
+                if args.eagleye:
+                    os.environ["EAGLEYE_GNSS"] = "1"
                 os.environ["GT_LOG"] = str(OUT_DIR / "gt" / f"{_tag}.csv")
                 (OUT_DIR / "gt").mkdir(exist_ok=True)
             try:
@@ -1086,7 +1101,17 @@ def run(args):
                 RESULTS_JSON.unlink(missing_ok=True)
 
                 procs.docker_bg(LB_CONTAINER, BRIDGE_CMD, "bridge")
-                procs.docker_bg(AW_CONTAINER, AUTOWARE_CMD, "autoware", user="aw")
+                _aw_cmd = AUTOWARE_CMD
+                if args.eagleye:
+                    # [eagleye] GNSS/IMU/wheel localization (no NDT), TransverseMercator map copy
+                    _aw_cmd = (AUTOWARE_CMD.replace("map_path:=/home/taewook/awcl_maps/Town07",
+                                                    "map_path:=/home/taewook/awcl_maps/Town07_tmerc")
+                               + " pose_source:=eagleye twist_source:=gyro_odom")
+                if os.environ.get("RVIZ_ON") == "1":      # [video] 디펜스 영상 녹화용
+                    _aw_cmd = _aw_cmd.replace(" rviz:=false", " rviz:=true")
+                    if os.environ.get("RVIZ_CFG"):
+                        _aw_cmd += " rviz_config:=" + os.environ["RVIZ_CFG"]
+                procs.docker_bg(AW_CONTAINER, _aw_cmd, "autoware", user="aw")
                 if not autoware_ready(args.dry):
                     raise RuntimeError("autoware not ready in time")
                 # monitors start BEFORE the leaderboard: their diagnostic-graph
@@ -1198,7 +1223,7 @@ def run(args):
             n_coll, coll_types = parse_infractions()
             sx, sy = detail.get("x", ""), detail.get("y", "")
             ov, pct = lane_occupancy(sx, sy) if isinstance(sx, float) and not math.isnan(sx) else ("", "")
-            row = [i, case["method"], case["fault"], case["sev"], case["t"],
+            row = [i, "stock" if args.mrm_off else case["method"], case["fault"], case["sev"], case["t"],
                    case["npc"], case["rep"],
                    outcome, detail.get("final_state", ""), detail.get("aw_mrm", ""),
                    sx, sy, ov, pct,
@@ -1265,6 +1290,11 @@ if __name__ == "__main__":
     ap.add_argument("--sev-value", metavar="VAL",
                     help="심각도 값을 직접 지정 (SEVERITY 표 대신). --fault 필수. "
                          "예: --fault lso --sev-value 0.2:90 --reps 5")
+    ap.add_argument("--rep", type=int, metavar="K",
+                    help="--sev-value 와 함께: rep K 하나만 실행 (TM_SEED=100+K)")
+    ap.add_argument("--eagleye", action="store_true",
+                    help="측위를 Eagleye(GNSS/IMU/차속)로: pose_source/twist_source:=eagleye, Town07_tmerc 지도, "
+                         "에이전트 NavSatFix·ECEF 속도 발행(EAGLEYE_GNSS=1)")
     ap.add_argument("--record", action="store_true",
                     help="CARLA GT 로그(results/gt/)와 인지·측위·점수 rosbag(results/bags/)을 남긴다")
     args = ap.parse_args()
