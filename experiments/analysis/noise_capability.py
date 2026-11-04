@@ -70,10 +70,18 @@ def read_bag(bag_dir):
     reader.open(rosbag2_py.StorageOptions(uri=str(bag_dir), storage_id="mcap"),
                 rosbag2_py.ConverterOptions("", ""))
     types = {t.name: t.type for t in reader.get_all_topics_and_types()}
+    # 분석에 쓰는 토픽만 역직렬화 (진단 그래프·제어 명령 등은 타입 불일치로 실패할 수 있음)
+    NEED = (DET_TOPIC, DET_FALLBACK, TRK_TOPIC, "/localization/kinematic_state",
+            "/localization/pose_estimator/pose_with_covariance",
+            "/localization/pose_estimator/nearest_voxel_transformation_likelihood",
+            "/sensing/gnss/pose_with_covariance", "/monitor/scores", "/fault_injection/active")
     out = defaultdict(list)
     cls = {}
+    bad = set()
     while reader.has_next():
         topic, data, t_ns = reader.read_next()
+        if topic not in NEED or topic in bad:
+            continue
         if topic not in cls:
             try:
                 cls[topic] = get_message(types[topic])
@@ -81,7 +89,10 @@ def read_bag(bag_dir):
                 cls[topic] = None
         if cls[topic] is None:
             continue
-        out[topic].append((t_ns * 1e-9, deserialize_message(data, cls[topic])))
+        try:
+            out[topic].append((t_ns * 1e-9, deserialize_message(data, cls[topic])))
+        except Exception:
+            bad.add(topic)
     return out
 
 

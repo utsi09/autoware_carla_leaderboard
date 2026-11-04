@@ -4,7 +4,9 @@
 # 완료 셀은 results/stock_done.txt 에 적어 재시작 시 건너뛴다.  사용: experiments/stock_matrix.sh
 set -uo pipefail
 cd /home/taewook/autoware_carla_leaderboard
-R="python3 -u experiments/experiment_runner.py --mrm-off --record --method ours --reps 15 --no-log-archive"
+export DISPLAY=:0
+gnome-session-inhibit --inhibit idle:suspend --reason "stock matrix rviz recording" sleep 300000 >/dev/null 2>&1 &
+INH=$!
 LOG=experiments/results/stock_matrix.log
 DONE=experiments/results/stock_done.txt
 touch $DONE
@@ -16,9 +18,10 @@ for npc in def none agg; do
       grep -qx "$f $s $npc $rep" $DONE && continue
       [ -f experiments/results/DISK_FULL ] && { echo "DISK_FULL — stop" | tee -a $LOG; exit 1; }
       echo "$(date '+%F %T') stock $f-$s npc=$npc rep=$rep free=$(df --output=avail -BG /home | tail -1 | tr -d ' ')" | tee -a $LOG
-      $R --fault "$f" --sev "$s" --npc "$npc" --rep "$rep" 2>&1 | grep -E "^\[runner\] result|^\[live\]|Traceback" | tee -a $LOG
+      experiments/stock_case_video.sh "$f" "$s" "$npc" "$rep" 2>&1 | grep -E "^VIDEO|^\[live\]|Traceback" | tee -a $LOG
       echo "$f $s $npc $rep" >> $DONE
     done
   done
 done
+kill $INH 2>/dev/null
 echo "$(date '+%F %T') stock matrix done" | tee -a $LOG

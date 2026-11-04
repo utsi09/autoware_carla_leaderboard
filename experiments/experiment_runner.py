@@ -79,7 +79,7 @@ MRM_MOVE_STUCK_PARKING_S = 560.0
 # --mrm-off (FTTI 도출 모드): 고장 후 이 시간 동안 무사고면 SURVIVED,
 # 고장 이후 시작된 정지가 이 시간 이상 지속되면 HAZARD_STOPPED
 HAZARD_SURVIVE_S = 360.0
-HAZARD_STOP_S = 60.0
+HAZARD_STOP_S = 100.0   # [stock matrix 11/04] 적신호 대기(최대 ~60 s)를 정지 사건으로 오판하지 않게 60->100 s
 # fresh CARLA per case: the server degrades progressively (boot 57s -> 150s+
 # by case 3-4, sim-rate drop re-flaps the 3 s diag timeouts and poisons
 # verdicts). ~1 min/restart is cheaper than a wasted 7-min case, and a fresh
@@ -108,6 +108,8 @@ BAG_TOPICS = [
     "/planning/mission_planning/route_state",
     "/control/command/control_cmd",
     "/diagnostics_graph/status",
+    "/perception/traffic_light_recognition/traffic_signals",            # 카메라 인식 결과 (cf/cn 때 신호를 어떻게 다루는지 확인용)
+    "/perception/traffic_light_recognition/external/traffic_signals",   # 에이전트 V2X 신호
     "/clock",
 ]
 
@@ -328,9 +330,6 @@ class Procs:
         for pat in ["cdr_monitor", "mrm_supervisor", "awcl_adapter", "ros2 launch",
                     "diagnostic_graph_utils dump_node", "dummy_defer"]:
             subprocess.run(["pkill", "-9", "-f", pat], capture_output=True)
-        # [record] 고아 rosbag 기록기는 다음 케이스에서 /rosbag2_recorder 노드 중복 -> Autoware 비상정지(출발 불가).
-        # 위에서 SIGINT 로 정리됐어야 하지만 남아 있으면 강제 종료한다.
-        subprocess.run(["pkill", "-9", "-f", "ros2 bag record"], capture_output=True)
         # the pattern above only matches the `ros2 run` wrapper; killing it -9
         # orphans the actual dump_node binary (path has a slash, not a space),
         # and one orphan per case re-triggers duplicated_node_checker
@@ -365,6 +364,9 @@ class Procs:
                 pass
             log.close()
         self.host_procs.clear()
+        # [record] 고아 rosbag 기록기(이전 러너가 남긴 것)는 다음 케이스에서 /rosbag2_recorder 노드 중복 ->
+        # Autoware 비상정지(출발 불가). 우리 것은 위에서 SIGINT 로 닫았으니, 남은 것만 강제 종료.
+        subprocess.run(["pkill", "-9", "-f", "ros2 bag record"], capture_output=True)
         if carla_alive():
             carla_unstick(False)
         time.sleep(3.0)
@@ -995,7 +997,7 @@ ANALYZE_CMD = ("source /opt/ros/humble/setup.bash && "
                "python3 experiments/analysis/noise_capability.py --tag {tag} --out {out}")
 
 
-def live_summary(idx, case, outcome, wall):
+def live_summary(idx, case, outcome, wall, detail=None, lane_ov="", lane_pct=""):
     """케이스가 끝날 때마다 bag+GT 를 분석해 한 줄 요약을 results/noise_sweep_live.md 에 붙인다."""
     tag = os.environ.get("CASE_TAG", "")
     if not tag:
@@ -1004,7 +1006,7 @@ def live_summary(idx, case, outcome, wall):
     live_dir.mkdir(exist_ok=True)
     out_csv = live_dir / f"{tag}.csv"
     hdr = ("| # | fault | level | rep | outcome | wall s | R_h | R_far | D_det m | FP/s | S_lidar | S_perc | "
-           "e_lat P95 m | ATE m | NVTL | NDT Hz | S_loc | n_h | frames |\n|" + "---|" * 19 + "\n")
+           "e_lat P95 m | ATE m | NVTL | NDT Hz | S_loc | n_h | frames | npc | t_hazard s | deg_dist m | lane % | min_gap m |\n|" + "---|" * 24 + "\n")
     if not LIVE_MD.exists():
         LIVE_MD.write_text(hdr)
     try:
@@ -1023,7 +1025,8 @@ def live_summary(idx, case, outcome, wall):
         line = (f"| {idx} | {case['fault']} | {case['sev']} | {case['rep']} | {outcome} | {wall} | "
                 f"{g('R_h')} | {g('R_far')} | {g('D_det','{:.1f}')} | {g('FP_s')} | {g('S_lidar_front')} | {g('S_perc')} | "
                 f"{g('e_lat_p95')} | {g('ate_rmse')} | {g('nvtl_med')} | {g('ndt_hz','{:.1f}')} | {g('s_loc_med')} | "
-                f"{d.get('n_h','')} | {d.get('n_frames','')} |")
+                f"{d.get('n_h','')} | {d.get('n_frames','')} | {case.get('npc','')} | "
+                f"{(detail or {}).get('t_hazard_s','')} | {(detail or {}).get('deg_dist_m','')} | {lane_pct} | {(detail or {}).get('min_gap_m','')} |")
     except Exception as e:
         line = f"| {idx} | {case['fault']} | {case['sev']} | {case['rep']} | {outcome} | {wall} | 분석 실패: {str(e)[:80]} |"
     with open(LIVE_MD, "a") as fh:
@@ -1241,7 +1244,7 @@ def run(args):
             f.flush()
             print(f"[runner] result: {outcome} ({wall}s)")
             if args.record:
-                live_summary(i, case, outcome, wall)
+                live_summary(i, case, outcome, wall, detail, ov, pct)
 
     if judge:
         judge.shutdown()
