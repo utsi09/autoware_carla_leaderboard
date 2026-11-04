@@ -967,6 +967,7 @@ class AutowareE2EAgent(TUMROSBaseAgent):
         position = self._awp_converter._get_localization()
         velocity = self._awp_converter._get_twist()
         loc_acc = self._awp_converter._get_acceleration()
+        self._gt_log_tick(aw_time, timestamp, position)
 
         # GNSS-PosePub
         ndt_pose_msg = PoseWithCovarianceStamped()
@@ -1440,7 +1441,78 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                 if match:
                     self._traffic_light_ids.add(int(match.group(1)))
 
+    # ------------------------------------------------------------------
+    # [noise-capability 2026-11] CARLA ground truth logger (env GT_LOG=<csv path>).
+    # One row per tick for the ego + one row per vehicle/walker within 80 m.
+    # Coordinates are converted to the Autoware map frame exactly like the
+    # GNSS pose (y -> -y, yaw -> -yaw) so they match /perception and EKF output.
+    def _gt_log_tick(self, aw_time, sim_t, ego_pos):
+        if not hasattr(self, "_gt_fh"):
+            import os as _os
+            _p = _os.environ.get("GT_LOG", "")
+            self._gt_fh = None
+            if _p:
+                try:
+                    _os.makedirs(_os.path.dirname(_p), exist_ok=True)
+                    self._gt_fh = open(_p, "w", buffering=1 << 16)
+                    self._gt_fh.write("sim_t,aw_sec,kind,id,x,y,z,yaw_deg,speed,"
+                                      "length,width,dist,bearing_deg,fault\n")
+                    self._gt_rows = 0
+                    print(f"[GT LOG] -> {_p}")
+                except Exception as e:
+                    print("[GT LOG] open failed:", e)
+        if self._gt_fh is None:
+            return
+        try:
+            _aw = (aw_time.sec + aw_time.nanosec * 1e-9) if aw_time is not None else -1.0
+            fault = 1 if self._fault_announced else 0
+            ex, ey = ego_pos["position"]["x"], ego_pos["position"]["y"]
+            tr = self._vehicle.get_transform()
+            eyaw = -tr.rotation.yaw                      # Autoware frame
+            v = self._vehicle.get_velocity()
+            espeed = math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
+            bb = self._vehicle.bounding_box
+            rows = [f"{sim_t:.3f},{_aw:.3f},ego,{self._vehicle.id},{ex:.3f},{ey:.3f},"
+                    f"{ego_pos['position']['z']:.3f},{eyaw:.2f},{espeed:.3f},"
+                    f"{2*bb.extent.x:.2f},{2*bb.extent.y:.2f},0,0,{fault}"]
+            eyaw_rad = math.radians(eyaw)
+            for a in self._world.get_actors():
+                tid = a.type_id
+                if not (tid.startswith("vehicle.") or tid.startswith("walker.")):
+                    continue
+                if a.id == self._vehicle.id:
+                    continue
+                atr = a.get_transform()
+                c = atr.transform(a.bounding_box.location)   # true box center (CARLA frame)
+                ax, ay = c.x, -c.y
+                dx, dy = ax - ex, ay - ey
+                dist = math.hypot(dx, dy)
+                if dist > 80.0:
+                    continue
+                av = a.get_velocity()
+                aspeed = math.sqrt(av.x * av.x + av.y * av.y + av.z * av.z)
+                bearing = math.degrees(math.atan2(dy, dx) - eyaw_rad)
+                bearing = (bearing + 180.0) % 360.0 - 180.0
+                kind = "veh" if tid.startswith("vehicle.") else "walker"
+                rows.append(f"{sim_t:.3f},{_aw:.3f},{kind},{a.id},{ax:.3f},{ay:.3f},{c.z:.3f},"
+                            f"{-atr.rotation.yaw:.2f},{aspeed:.3f},"
+                            f"{2*a.bounding_box.extent.x:.2f},{2*a.bounding_box.extent.y:.2f},"
+                            f"{dist:.2f},{bearing:.1f},{fault}")
+            self._gt_fh.write("\n".join(rows) + "\n")
+            self._gt_rows += len(rows)
+            if self._gt_rows % 2000 < len(rows):
+                self._gt_fh.flush()
+        except Exception as e:
+            if not getattr(self, "_gt_err", False):
+                self._gt_err = True
+                print("[GT LOG] tick failed:", e)
+
     def destroy(self):
+        try:
+            if getattr(self, "_gt_fh", None):
+                self._gt_fh.close()
+        except Exception:
+            pass
         """
         Destroy (clean-up) the agent
         :return:

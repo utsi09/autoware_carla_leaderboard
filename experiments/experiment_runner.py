@@ -42,7 +42,7 @@ AUTOWARE_CMD = ("cd /home/taewook/autoware_awcl/autoware && "
                 "diagnostic_graph_type:=carla "
                 "vehicle_model:=carla_audi_etron_vehicle "
                 "sensor_model:=carla_audi_etron_sensor_kit "
-                "map_path:=/home/taewook/awcl_maps/Town07")
+                "map_path:=/home/taewook/awcl_maps/Town07 rviz:=false")
 LEADERBOARD_CMD = ("cd /home/taewook/autoware_carla_leaderboard && "
                    "source install/setup.bash && source carla_envs.sh && "
                    "./run_leaderboard.sh {faults}")
@@ -86,6 +86,24 @@ HAZARD_STOP_S = 60.0
 # world per case is better experimental hygiene anyway (no leftover actors).
 CARLA_RESTART_EVERY = 1
 DEST_XY = None   # [v4.7] --dg 목적지 (x, y) — 완주 근사 판정용 (main에서 설정)
+# [noise-capability] --record 때 bag 에 담는 토픽 (포인트클라우드·이미지 제외: Hz 영향 없음)
+BAG_TOPICS = [
+    "/perception/object_recognition/detection/centerpoint/objects",
+    "/perception/object_recognition/detection/objects",
+    "/perception/object_recognition/tracking/objects",
+    "/perception/object_recognition/objects",
+    "/localization/kinematic_state",
+    "/localization/pose_estimator/pose_with_covariance",
+    "/localization/pose_estimator/transform_probability",
+    "/localization/pose_estimator/nearest_voxel_transformation_likelihood",
+    "/localization/pose_estimator/exe_time_ms",
+    "/sensing/gnss/pose_with_covariance",
+    "/sensing/imu/imu_data",
+    "/monitor/scores",
+    "/fault_injection/active",
+    "/vehicle/status/velocity_status",
+    "/clock",
+]
 
 # ---------------------------------------------------------------- case matrix
 # per-fault severity values (units differ: ln meters, cn pixel sigma 0-255,
@@ -149,6 +167,13 @@ def build_cases(args):
                                   "sev": row["severity"], "t": int(row["trigger_s"]),
                                   "npc": row["npc"], "rep": int(row["rep"])})
         return cases
+    if args.sev_value:
+        # [noise-capability] 스윕용: 심각도 값을 문자열 그대로 (예 "0.2:90", "10:2100", "0.25")
+        return [{"method": m, "fault": args.fault, "sev": args.sev_value,
+                 "t": args.t if args.t is not None else 10,
+                 "npc": args.npc or "def", "rep": r}
+                for r in range(args.reps if args.reps is not None else 1)
+                for m in methods]
     if args.smoke:
         return [{"method": m,
                  "fault": args.fault or "ln",
@@ -195,7 +220,8 @@ def fault_args(case, dg="1"):
     elif case["fault"] in NO_SEVERITY:
         args = f"{case['fault']}={case['t']}"
     else:
-        args = f"{case['fault']}={case['t']}:{SEVERITY[case['fault']][case['sev']]}"
+        _sv = SEVERITY.get(case['fault'], {}).get(case['sev'], case['sev'])
+        args = f"{case['fault']}={case['t']}:{_sv}"
     # per-rep TM seed: ours/baseline share it (matched pairs), reps differ.
     # Without this the config seed 0 makes every repetition identical traffic.
     args += f" TM_SEED={100 + case['rep']}"
@@ -232,7 +258,7 @@ class Procs:
         # -u matches the user of the manual (working) terminals
         full = ["docker", "exec", "-e", "ROS_DOMAIN_ID=0"]
         # [v5 절제] 시드 env 패스스루 — 오케스트레이터가 케이스별로 설정
-        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL"):
+        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL", "GT_LOG"):
             _sv = os.environ.get(_sk)
             if _sv:
                 full += ["-e", f"{_sk}={_sv}"]
@@ -309,6 +335,17 @@ class Procs:
                        capture_output=True)
         # reset the ros2 CLI daemon so stale discovery caches don't linger
         subprocess.run(["bash", "-lc", "ros2 daemon stop"], capture_output=True)
+        # [record] rosbag must be closed gracefully (SIGINT) or metadata is lost
+        for name, p, log in self.host_procs:
+            if name == "bag" and p.poll() is None:
+                try:
+                    os.killpg(os.getpgid(p.pid), signal.SIGINT)
+                    for _ in range(30):
+                        if p.poll() is not None:
+                            break
+                        time.sleep(0.5)
+                except (ProcessLookupError, PermissionError):
+                    pass
         for name, p, log in self.host_procs:
             try:
                 os.killpg(os.getpgid(p.pid), signal.SIGKILL)
@@ -937,6 +974,50 @@ def archive_case_logs(idx, case, dry):
 
 
 # ---------------------------------------------------------------- main loop
+
+# ---------------------------------------------------------------- [noise-capability] per-case live summary
+LIVE_MD = OUT_DIR / "noise_sweep_live.md"
+ANALYZE_CMD = ("source /opt/ros/humble/setup.bash && "
+               "source /home/taewook/autoware_awcl/autoware/install/setup.bash && "
+               "cd /home/taewook/autoware_carla_leaderboard && "
+               "python3 experiments/analysis/noise_capability.py --tag {tag} --out {out}")
+
+
+def live_summary(idx, case, outcome, wall):
+    """케이스가 끝날 때마다 bag+GT 를 분석해 한 줄 요약을 results/noise_sweep_live.md 에 붙인다."""
+    tag = os.environ.get("CASE_TAG", "")
+    if not tag:
+        return
+    live_dir = OUT_DIR / "live"
+    live_dir.mkdir(exist_ok=True)
+    out_csv = live_dir / f"{tag}.csv"
+    hdr = ("| # | fault | level | rep | outcome | wall s | R_h | R_far | D_det m | FP/s | S_lidar | S_perc | "
+           "e_lat P95 m | ATE m | NVTL | NDT Hz | S_loc | n_h | frames |\n|" + "---|" * 19 + "\n")
+    if not LIVE_MD.exists():
+        LIVE_MD.write_text(hdr)
+    try:
+        r = subprocess.run(["bash", "-lc", ANALYZE_CMD.format(tag=tag, out=out_csv)],
+                           capture_output=True, text=True, timeout=600)
+        rows = list(csv.DictReader(open(out_csv, newline=""))) if out_csv.exists() else []
+        if not rows:
+            raise RuntimeError((r.stdout + r.stderr)[-300:])
+        d = rows[0]
+        def g(k, fmt="{:.2f}"):
+            v = d.get(k, "")
+            try:
+                return fmt.format(float(v)) if v not in ("", "nan") else "–"
+            except ValueError:
+                return "–"
+        line = (f"| {idx} | {case['fault']} | {case['sev']} | {case['rep']} | {outcome} | {wall} | "
+                f"{g('R_h')} | {g('R_far')} | {g('D_det','{:.1f}')} | {g('FP_s')} | {g('S_lidar_front')} | {g('S_perc')} | "
+                f"{g('e_lat_p95')} | {g('ate_rmse')} | {g('nvtl_med')} | {g('ndt_hz','{:.1f}')} | {g('s_loc_med')} | "
+                f"{d.get('n_h','')} | {d.get('n_frames','')} |")
+    except Exception as e:
+        line = f"| {idx} | {case['fault']} | {case['sev']} | {case['rep']} | {outcome} | {wall} | 분석 실패: {str(e)[:80]} |"
+    with open(LIVE_MD, "a") as fh:
+        fh.write(line + "\n")
+    print("[live] " + line)
+
 def run(args):
     os.environ["ROS_DOMAIN_ID"] = "0"   # judge + ros2 CLI polling
     # judge must speak the containers' DDS dialect too
@@ -985,6 +1066,18 @@ def run(args):
                     break
             print(f"\n===== case {i + 1}/{len(cases)}: {case} =====")
             t0 = time.time()
+            if args.record:
+                import shutil
+                _free_gb = shutil.disk_usage(str(OUT_DIR)).free / 1e9
+                if _free_gb < 15.0:
+                    print(f"[runner] disk free {_free_gb:.1f} GB < 15 GB — stopping batch")
+                    (OUT_DIR / "DISK_FULL").write_text(f"{datetime.now()} free={_free_gb:.1f}GB\n")
+                    break
+                _tag = (f"{case['fault']}-{str(case['sev']).replace(':', '_')}-"
+                        f"{case['npc']}-r{case['rep']}-{stamp}")
+                os.environ["CASE_TAG"] = _tag
+                os.environ["GT_LOG"] = str(OUT_DIR / "gt" / f"{_tag}.csv")
+                (OUT_DIR / "gt").mkdir(exist_ok=True)
             try:
                 procs.kill_all()
                 if judge:
@@ -1035,6 +1128,15 @@ def run(args):
                 # --mrm-off: 모니터·MRM 개입 없이 고장 진행만 관찰 (FTTI 도출)
                 # per-unit graph levels — to identify which unit flaps the MRM
                 procs.host_bg(DUMP_CMD, "diag_dump")
+                if args.record:
+                    # [noise-capability] perception / localization / scores -> rosbag (mcap)
+                    _bag_dir = OUT_DIR / "bags" / os.environ["CASE_TAG"]
+                    procs.host_bg(
+                        "source /opt/ros/humble/setup.bash && "
+                        "source /home/taewook/autoware_awcl/autoware/install/setup.bash && "
+                        f"ros2 bag record -s mcap --max-bag-size 400000000 -o {_bag_dir} "
+                        + " ".join(BAG_TOPICS), "bag")
+                    time.sleep(2.0)
                 lb = procs.docker_bg(LB_CONTAINER,
                                      LEADERBOARD_CMD.format(
                                          faults=fault_args(case, args.dg)),
@@ -1113,6 +1215,8 @@ def run(args):
             wr.writerow(row)
             f.flush()
             print(f"[runner] result: {outcome} ({wall}s)")
+            if args.record:
+                live_summary(i, case, outcome, wall)
 
     if judge:
         judge.shutdown()
@@ -1157,6 +1261,12 @@ if __name__ == "__main__":
                     help="demo: exclude shoulder candidates so a parking lot wins")
     ap.add_argument("--no-log-archive", action="store_true",
                     help="케이스별 cdr/supervisor 로그 gzip 보관을 끈다")
+    # ---------------- noise-capability 스윕 옵션 (2026-11)
+    ap.add_argument("--sev-value", metavar="VAL",
+                    help="심각도 값을 직접 지정 (SEVERITY 표 대신). --fault 필수. "
+                         "예: --fault lso --sev-value 0.2:90 --reps 5")
+    ap.add_argument("--record", action="store_true",
+                    help="CARLA GT 로그(results/gt/)와 인지·측위·점수 rosbag(results/bags/)을 남긴다")
     args = ap.parse_args()
     try:
         if args.dg and args.dg not in ("", "1"):
