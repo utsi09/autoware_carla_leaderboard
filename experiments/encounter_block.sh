@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# 조우 블록 A: 고장 3종 + nf × 3팔(stock mrm-off / ours / baseline) × 10시드, 보행자 돌발(고장 5 s 뒤 전방 8 m, 2.5 m/s).
+# 조우 블록 A: 고장 3종 + nf × 2팔(순정 stock mrm-off / 제안 ours) × 10시드, 보행자 돌발(고장 5 s 뒤 전방 8 m, 2.5 m/s).
 # 같은 시드는 세 팔이 같은 교통·같은 보행자·같은 주입시점을 만난다. 완료 셀은 results/encounter_done.txt.
-#   사용: experiments/encounter_block.sh        (약 120회, 10시간)
+#   사용: experiments/encounter_block.sh        (약 80회, 7시간)
 set -uo pipefail
 cd /home/taewook/autoware_carla_leaderboard
 LOG=experiments/results/encounter_block.log; DONE=experiments/results/encounter_done.txt; touch $DONE
@@ -11,7 +11,7 @@ COND=("nf nf" "lso 0.07:150" "lcl 25:4000" "cn 30")
 for rep in $(seq 0 9); do
   for c in "${COND[@]}"; do
     set -- $c; f=$1; v=$2
-    for arm in stock ours baseline; do
+    for arm in stock ours; do
       grep -qx "$f $v $arm $rep" $DONE && continue
       [ -f experiments/results/DISK_FULL ] && { echo "DISK_FULL — stop" | tee -a $LOG; exit 1; }
       case $arm in
