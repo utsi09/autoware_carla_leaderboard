@@ -273,7 +273,7 @@ def analyse(gt_path):
 
 
 def main():
-    paths = sorted(glob.glob(str(RES / "gt" / "stock-*.csv")))
+    paths = [p for p in sorted(glob.glob(str(RES / "gt" / "stock-*.csv"))) if not p.endswith("_tl.csv")]
     if len(sys.argv) > 1:
         paths = [p for p in paths if any(a in p for a in sys.argv[1:])]
     # 같은 셀을 두 번 돌린 경우(중단·재실행) 가장 최근 파일만 (파일명 끝 stamp 가 시간순)
