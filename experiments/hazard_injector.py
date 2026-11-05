@@ -715,7 +715,8 @@ def main():
     rec_q = None
     rec_n = 0
     rec_dir = None
-    if ped is not None:
+    import os as _os0
+    if ped is not None and not _os0.environ.get("HAZARD_NOREC"):   # [2026-11-05] HAZARD_NOREC=1: 톱뷰 자체 녹화(케이스당 ~260 MB png) 생략
         try:
             import os as _os, queue as _q
             _tag = _os.environ.get("CASE_TAG", "case")

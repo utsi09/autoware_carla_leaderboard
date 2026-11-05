@@ -271,7 +271,7 @@ class Procs:
         # -u matches the user of the manual (working) terminals
         full = ["docker", "exec", "-e", "ROS_DOMAIN_ID=0"]
         # [v5 절제] 시드 env 패스스루 — 오케스트레이터가 케이스별로 설정
-        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL", "GT_LOG", "EAGLEYE_GNSS"):
+        for _sk in ("FAULT_SEED", "FAULT_TRACE", "WALKER_SEED", "CASE_TAG", "DETECT_CAP", "FREEZE_TL", "GT_LOG", "EAGLEYE_GNSS", "HAZARD_NOREC"):
             _sv = os.environ.get(_sk)
             if _sv:
                 full += ["-e", f"{_sk}={_sv}"]
