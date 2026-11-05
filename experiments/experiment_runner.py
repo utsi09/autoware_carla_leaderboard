@@ -88,6 +88,8 @@ CARLA_RESTART_EVERY = 1
 DEST_XY = None   # [v4.7] --dg 목적지 (x, y) — 완주 근사 판정용 (main에서 설정)
 # [noise-capability] --record 때 bag 에 담는 토픽 (포인트클라우드·이미지 제외: Hz 영향 없음)
 BAG_TOPICS = [
+    "/api/planning/velocity_factors", "/api/planning/steering_factors",   # 플래너가 왜 감속/정지했는지 (허위 장애물·신호 등) — 2026-11-05 추가
+
     "/perception/object_recognition/detection/centerpoint/objects",
     "/perception/object_recognition/detection/objects",
     "/perception/object_recognition/tracking/objects",
