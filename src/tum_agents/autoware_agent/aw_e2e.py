@@ -1514,6 +1514,26 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                                       "length,width,dist,bearing_deg,fault,tl\n")
                     self._gt_rows = 0
                     print(f"[GT LOG] -> {_p}")
+                    # [2026-11-05] 신호등 전수 기록 (<GT_LOG>_tl.csv): 정지선 위치 1회 + 상태 변화 이벤트.
+                    # ego.is_at_traffic_light() 는 영향권 안에 있을 때만 찍혀 "빨강 통과" 판정이 불안정 → 신호등 자체 상태로 판정.
+                    try:
+                        self._tl_fh = open(_p[:-4] + "_tl.csv" if _p.endswith(".csv") else _p + "_tl.csv", "w", buffering=1 << 14)
+                        self._tl_fh.write("kind,aw_sec,tl_id,state,x,y,yaw_deg\n")
+                        self._tls = list(self._world.get_actors().filter("traffic.traffic_light*"))
+                        for _tl in self._tls:
+                            try:
+                                for _wp in _tl.get_stop_waypoints():
+                                    _t = _wp.transform
+                                    self._tl_fh.write(f"stop,-1,{_tl.id},-,{_t.location.x:.2f},{-_t.location.y:.2f},{-_t.rotation.yaw:.1f}\n")
+                            except Exception:
+                                _t = _tl.get_transform()
+                                self._tl_fh.write(f"stop,-1,{_tl.id},-,{_t.location.x:.2f},{-_t.location.y:.2f},{-_t.rotation.yaw:.1f}\n")
+                        self._tl_prev = {}
+                        self._tl_tick = 0
+                        print(f"[GT LOG] traffic lights: {len(self._tls)}")
+                    except Exception as e:
+                        self._tl_fh = None
+                        print("[GT LOG] tl log open failed:", e)
                 except Exception as e:
                     print("[GT LOG] open failed:", e)
         if self._gt_fh is None:
@@ -1560,6 +1580,20 @@ class AutowareE2EAgent(TUMROSBaseAgent):
                             f"{dist:.2f},{bearing:.1f},{fault},-")
             self._gt_fh.write("\n".join(rows) + "\n")
             self._gt_rows += len(rows)
+            # 신호등 상태 변화 (4 Hz 로 샘플)
+            if getattr(self, "_tl_fh", None) is not None:
+                self._tl_tick += 1
+                if self._tl_tick % 5 == 0:
+                    try:
+                        for _tl in self._tls:
+                            _st = str(_tl.get_state()).split(".")[-1][0]
+                            if self._tl_prev.get(_tl.id) != _st:
+                                self._tl_prev[_tl.id] = _st
+                                self._tl_fh.write(f"state,{_aw:.3f},{_tl.id},{_st},0,0,0\n")
+                        if self._tl_tick % 100 == 0:
+                            self._tl_fh.flush()
+                    except Exception:
+                        pass
             if self._gt_rows % 2000 < len(rows):
                 self._gt_fh.flush()
         except Exception as e:
