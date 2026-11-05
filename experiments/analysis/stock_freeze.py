@@ -222,14 +222,15 @@ def analyse(gt_path):
                 return st
             runs = 0; crossed = set()
             for r in post:
-                if r["speed"] <= 1.0: continue
+                if float(r["speed"]) <= 1.0: continue
+                rx, ry, ryaw, rt = float(r["x"]), float(r["y"]), float(r["yaw_deg"]), float(r["aw_sec"])
                 for (tid, sx, sy, syaw) in stops:
                     if (tid, sx, sy) in crossed: continue
-                    if math.hypot(r["x"] - sx, r["y"] - sy) > 2.5: continue
-                    d = (r["yaw_deg"] - syaw + 180.0) % 360.0 - 180.0
+                    if math.hypot(rx - sx, ry - sy) > 2.5: continue
+                    d = (ryaw - syaw + 180.0) % 360.0 - 180.0
                     if abs(d) > 45.0: continue
                     crossed.add((tid, sx, sy))
-                    if state_at(tid, r["aw_sec"]) == "R": runs += 1
+                    if state_at(tid, rt) == "R": runs += 1
             out["red_light_runs_tl"] = runs; out["red_light_runs"] = runs      # 정지선 기준이 더 정확 → 덮어씀
             out["stoplines_crossed"] = len(crossed)
         except Exception as e:
