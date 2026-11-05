@@ -343,6 +343,9 @@ def main():
             time.sleep(2.0)
         return
 
+    # [2026-11-05] 레거시 spec(<delay>:<dist>:<speed>) 경로에서 아래 변수들이 미정의라 UnboundLocalError 로 죽던 것 수정
+    _legacy_spec = not (args.spec.startswith("fixed") or args.spec.startswith("dist"))
+    _ttc = 2.5; _dist_fixed = None; _gate_v = 3.0; _arm_after = None; _time_trig = None; _lat_jit = 0.0; _settle_band = None
     if args.spec.startswith("fixed") or args.spec.startswith("dist"):
         # [v4.9m] fixed:<TTC초> | [v4.9s] dist:<정확한 스폰거리 m> (거리 사다리)
         _ttc = 2.5
@@ -443,6 +446,25 @@ def main():
                     (-96.5, -15.0),    # 서측 남북로 (W 갓길 경로)
                     (-50.0, -109.0)]   # 임무 서측 구간
         fired = False
+        # [2026-11-05 조우 블록] 레거시 spec: 주행시작 + fault_t + delay 에 (위 대기 루프가 끝난 지금)
+        # 에고 현재 위치 전방 dist m 보도에서 보행자 발사. 팔(순정/제안)·속도·상태 불문 — 같은 시드면 같은 시각.
+        if _legacy_spec and not fired:
+            try:
+                world = client.get_world()
+                ego = find_ego(world)
+                if ego is not None:
+                    loc = ego.get_location()
+                    r = spawn_ped_xy(world, (loc.x, loc.y), dist, walk_speed)
+                    if r is not None:
+                        ped, direction = r
+                        attach_collision_sensor(world, ped)
+                    print(f"[hazard] LEGACY timed fire: ped {dist:.0f} m ahead, walk {walk_speed:.1f} m/s, "
+                          f"ego=({loc.x:.1f},{loc.y:.1f}) v={speed_of(ego):.2f} ok={r is not None}", flush=True)
+                else:
+                    print("[hazard] legacy fire: ego not found", flush=True)
+            except Exception as e:
+                print(f"[hazard] legacy fire failed: {e!r}", flush=True)
+            fired = True
         # [v5 절제] 시간 트리거: t_detect(cdr 점수<0.7) + delay 에 속도·상태
         # 불문, 에고 현재 위치 전방 dist m 발사. 정지 상태여도 발사 —
         # 발사가 treatment에 종속되지 않게 (전문가 검토 반영).

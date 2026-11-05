@@ -21,7 +21,7 @@ for rep in $(seq 0 9); do
       esac
       NAME="enc-$arm-$f-$(echo $v | tr ':' '_')-r$rep"
       echo "$(date '+%F %T') $NAME free=$(df --output=avail -BG /home | tail -1 | tr -d ' ')" | tee -a $LOG
-      HAZARD="ped=5:8:2.5" WALKER_SEED=$((12+rep)) FAULT_SEED=$((12+rep)) \
+      CASE_TAG="$NAME" HAZARD="ped=5:8:2.5" WALKER_SEED=$((12+rep)) FAULT_SEED=$((12+rep)) \
         experiments/case_video.sh "$NAME" $ARGS --npc def --t 25 --fault "$f" --sev-value "$v" --rep "$rep" 2>&1 | grep -E "^VIDEO|^\[live\]|Traceback" | tee -a $LOG
       echo "$f $v $arm $rep" >> $DONE
     done
