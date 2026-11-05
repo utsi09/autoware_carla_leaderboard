@@ -197,6 +197,14 @@ def analyse(gt_path):
         out["xte_max_m"] = out["xte_p95_m"] = out["off_road"] = ""
     yaw = [float(r["yaw_deg"]) for r in post]
     out["yaw_rate_max_deg_s"] = round(max((abs((yaw[i + 20] - yaw[i] + 180) % 360 - 180) for i in range(0, len(yaw) - 20)), default=0), 1)
+    # 신호 위반: 자차 신호가 R 인 구간(GT tl 열, 교차로 정지선 영역) 을 1 m/s 넘는 속도로 통과한 횟수
+    red_runs = 0; in_r = []
+    for r in post + [None]:
+        if r is not None and r.get("tl", "-") == "R": in_r.append(float(r["speed"])); continue
+        if in_r:
+            if len(in_r) >= 10 and min(in_r) > 1.0: red_runs += 1          # 0.5 s 이상 빨강 구간을 한 번도 서지 않고 통과
+            in_r = []
+    out["red_light_runs"] = red_runs
     # stutter: 정지(2 s 이상) -> 재출발 횟수
     stops = 0; in_stop = 0
     for r in post:
@@ -261,11 +269,12 @@ def main():
     cond = collections.OrderedDict()
     for r in rows:
         cond.setdefault((r["fault"], r["sev"], r["npc"]), collections.Counter())[r["cls"]] += 1
-    print("| fault | sev | npc | n | " + " | ".join(order) + " | standstill-inj |")
-    print("|" + "---|" * (4 + len(order) + 1))
+    print("| fault | sev | npc | n | " + " | ".join(order) + " | standstill-inj | red-light runs (cases/events) |")
+    print("|" + "---|" * (4 + len(order) + 2))
     for (f, s, n), c in cond.items():
         st = sum(1 for r in rows if (r["fault"], r["sev"], r["npc"]) == (f, s, n) and r["injected_at_standstill"] == 1)
-        print(f"| {f} | {s} | {n} | {sum(c.values())} | " + " | ".join(str(c.get(o, 0)) for o in order) + f" | {st} |")
+        rr = [r.get("red_light_runs", 0) for r in rows if (r["fault"], r["sev"], r["npc"]) == (f, s, n)]
+        print(f"| {f} | {s} | {n} | {sum(c.values())} | " + " | ".join(str(c.get(o, 0)) for o in order) + f" | {st} | {sum(1 for x in rr if x)}/{sum(rr)} |")
     def fnum(x):
         try: return float(x)
         except Exception: return None
