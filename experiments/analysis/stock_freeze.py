@@ -205,6 +205,35 @@ def analyse(gt_path):
             if len(in_r) >= 10 and min(in_r) > 1.0: red_runs += 1          # 0.5 s 이상 빨강 구간을 한 번도 서지 않고 통과
             in_r = []
     out["red_light_runs"] = red_runs
+    # [2026-11-05] 신호등 전수 기록(<tag>_tl.csv)이 있으면 정지선 기준으로 다시 센다:
+    # 자차가 어떤 신호등의 정지선(2.5 m 안, 진행방향 ±45°)을 1 m/s 넘는 속도로 지나는 순간 그 신호등이 R 이면 위반 1회
+    tlp = Path(gt_path).with_name(Path(gt_path).stem + "_tl.csv")
+    if tlp.exists():
+        try:
+            stops = []; events = collections.defaultdict(list)
+            for r in csv.DictReader(open(tlp, newline="")):
+                if r["kind"] == "stop": stops.append((int(r["tl_id"]), float(r["x"]), float(r["y"]), float(r["yaw_deg"])))
+                elif r["kind"] == "state": events[int(r["tl_id"])].append((float(r["aw_sec"]), r["state"]))
+            def state_at(tl_id, t):
+                st = "-"
+                for ts_, s_ in events.get(tl_id, []):
+                    if ts_ <= t: st = s_
+                    else: break
+                return st
+            runs = 0; crossed = set()
+            for r in post:
+                if r["speed"] <= 1.0: continue
+                for (tid, sx, sy, syaw) in stops:
+                    if (tid, sx, sy) in crossed: continue
+                    if math.hypot(r["x"] - sx, r["y"] - sy) > 2.5: continue
+                    d = (r["yaw_deg"] - syaw + 180.0) % 360.0 - 180.0
+                    if abs(d) > 45.0: continue
+                    crossed.add((tid, sx, sy))
+                    if state_at(tid, r["aw_sec"]) == "R": runs += 1
+            out["red_light_runs_tl"] = runs; out["red_light_runs"] = runs      # 정지선 기준이 더 정확 → 덮어씀
+            out["stoplines_crossed"] = len(crossed)
+        except Exception as e:
+            out["red_light_runs_tl"] = ""
     # stutter: 정지(2 s 이상) -> 재출발 횟수
     stops = 0; in_stop = 0
     for r in post:
