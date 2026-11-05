@@ -220,16 +220,25 @@ def analyse(gt_path):
                     if ts_ <= t: st = s_
                     else: break
                 return st
-            runs = 0; crossed = set()
+            # [2026-11-05b] "통과" = 정지선을 실제로 넘는 순간(정지선 진행방향 좌표가 0 이하 -> 0 초과)으로만 센다.
+            # 예전 2.5 m 반경 판정은 선 앞에서 멈추는 접근(감속 중 1~1.4 m/s)도 통과로 셌다 (cn-high none r7).
+            runs = 0; crossed = set(); prev_along = {}
             for r in post:
-                if float(r["speed"]) <= 1.0: continue
                 rx, ry, ryaw, rt = float(r["x"]), float(r["y"]), float(r["yaw_deg"]), float(r["aw_sec"])
                 for (tid, sx, sy, syaw) in stops:
-                    if (tid, sx, sy) in crossed: continue
-                    if math.hypot(rx - sx, ry - sy) > 2.5: continue
+                    key = (tid, sx, sy)
+                    if math.hypot(rx - sx, ry - sy) > 6.0:
+                        prev_along.pop(key, None); continue
+                    c_, s_ = math.cos(math.radians(syaw)), math.sin(math.radians(syaw))
+                    along = (rx - sx) * c_ + (ry - sy) * s_            # + 면 정지선을 지나친 쪽
+                    lat = -(rx - sx) * s_ + (ry - sy) * c_
+                    pa = prev_along.get(key); prev_along[key] = along
+                    if key in crossed or pa is None or not (pa <= 0.0 < along): continue
+                    if abs(lat) > 3.5: continue
                     d = (ryaw - syaw + 180.0) % 360.0 - 180.0
                     if abs(d) > 45.0: continue
-                    crossed.add((tid, sx, sy))
+                    if float(r["speed"]) <= 1.0: continue                 # 선을 1 m/s 넘는 속도로 넘어야 통과
+                    crossed.add(key)
                     if state_at(tid, rt) == "R": runs += 1
             out["red_light_runs_tl"] = runs; out["red_light_runs"] = runs      # 정지선 기준이 더 정확 → 덮어씀
             out["stoplines_crossed"] = len(crossed)
