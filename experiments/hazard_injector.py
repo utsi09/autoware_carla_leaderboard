@@ -453,6 +453,13 @@ def main():
                 world = client.get_world()
                 ego = find_ego(world)
                 if ego is not None:
+                    # [2026-11-06] 시각만으로 쏘면 적신호 대기(정지) 중에 떨어져 조우가 안 됨
+                    # (enc-stock-nf-nf-r0: 8 m 앞을 그냥 지나감, 자차 v=0). 예정 시각 이후
+                    # 에고가 1.5 m/s 이상으로 움직이는 첫 순간에 발사 (최대 240 s 대기, 두 팔 같은 규칙).
+                    _gw0 = time.time(); _gv = speed_of(ego)
+                    while _gv < 1.5 and time.time() - _gw0 < 240.0:
+                        time.sleep(0.1); _gv = speed_of(ego)
+                    print(f"[hazard] legacy gate: waited {time.time()-_gw0:.1f}s for v>=1.5 (v={_gv:.2f})", flush=True)
                     loc = ego.get_location()
                     r = spawn_ped_xy(world, (loc.x, loc.y), dist, walk_speed)
                     if r is not None:
