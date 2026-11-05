@@ -43,7 +43,7 @@ if [ -n "$WID" ] && kill -0 $RPID 2>/dev/null; then
 fi
 wait $RPID
 RES=$(grep -a -m1 "\[runner\] result" $R/run_$NAME.log | sed 's/.*result: //')
-if [ -n "$FPID" ]; then sleep 2; kill -INT $FPID 2>/dev/null; wait $FPID 2>/dev/null; fi
+if [ -n "$FPID" ]; then sleep 2; kill -INT $FPID 2>/dev/null || true; wait $FPID 2>/dev/null || true; fi   # [2026-11-06] 캡처 ffmpeg 가 먼저 죽었어도(RViz 종료) set -e 로 스크립트가 끊기지 않게
 if [ -s "$V/$NAME.mp4" ]; then
   ffmpeg -hide_banner -loglevel error -y -i "$V/$NAME.mp4" -filter:v "setpts=0.25*PTS" -r 15 -an -c:v libx264 -crf 28 "$V/${NAME}_x4.mp4" && rm -f "$V/$NAME.mp4"
   echo "VIDEO $V/${NAME}_x4.mp4 $(du -m "$V/${NAME}_x4.mp4" | cut -f1)MB result=$RES"
