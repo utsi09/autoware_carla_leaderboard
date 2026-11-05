@@ -29,7 +29,11 @@ PY
 )
 FPID=""
 if [ -n "$WID" ] && kill -0 $RPID 2>/dev/null; then
-  ffmpeg -hide_banner -loglevel error -y -f x11grab -framerate 10 -window_id "$WID" -i "$DISPLAY" -t 900 \
+  # [2026-11-06] 창 id 캡처는 RViz 가 창을 다시 만들면 옛 id 가 검은 화면만 내보냄(검은 녹화 11건).
+  #   창의 화면 영역(좌표·크기)을 잡아 영역 캡처로 바꿈; 영역을 못 읽으면 예전 방식.
+  GEO=$(xwininfo -id "$WID" 2>/dev/null | awk '/Absolute upper-left X/{x=$NF} /Absolute upper-left Y/{y=$NF} /^ *Width/{w=$NF} /^ *Height/{h=$NF} END{if(w>0&&h>0) printf "%dx%d %d,%d", w-(w%2), h-(h%2), x, y}')
+  if [ -n "$GEO" ]; then read GSZ GOFF <<<"$GEO"; GRAB=(-video_size "$GSZ" -i "$DISPLAY+$GOFF"); else GRAB=(-window_id "$WID" -i "$DISPLAY"); fi
+  ffmpeg -hide_banner -loglevel error -y -f x11grab -framerate 10 "${GRAB[@]}" -t 900 \
     -vf "scale=1280:-2" -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p "$V/$NAME.mp4" &
   FPID=$!
 fi
