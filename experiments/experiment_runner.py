@@ -1226,6 +1226,11 @@ def run(args):
 
             wall = round(time.time() - t0, 1)
             n_coll, coll_types = parse_infractions()
+            try:  # [2026-11-06] 리더보드 json 케이스별 보관 — 충돌 이벤트의 위치(보행자 접촉 지점) 사후 분석용
+                _lbd = REPO / "experiments" / "results" / "lb_json"; _lbd.mkdir(exist_ok=True)
+                import shutil as _sh; _sh.copy(RESULTS_JSON, _lbd / f"{locals().get('_tag', 'case%d' % i)}.json")
+            except Exception:
+                pass
             sx, sy = detail.get("x", ""), detail.get("y", "")
             ov, pct = lane_occupancy(sx, sy) if isinstance(sx, float) and not math.isnan(sx) else ("", "")
             row = [i, "stock" if args.mrm_off else case["method"], case["fault"], case["sev"], case["t"],
