@@ -56,7 +56,7 @@ for f, s, lab in ROWS:
         v = cell.get((f, s, c))
         cells.append("–" if v is None else (f"{v[0]}/{v[1]}" + (f" ({v[2]:.1f})" if v[2] is not None else "")))
     lines.append(f"| {lab} | " + " | ".join(cells) + " |")
-lines += ["", "항법·cf·lf 열(Autoware 진단·Yu·Huang&Su·제안)은 순정 bag 재생 셀당 45런; 비전 열(Won·Zhang·Lee)은 원시 기록 셀당 5런; Alibi Online MMD 는 센서별 특징에 무고장 보정 문턱(변형 a), 셀당 5–6런; RADAS 이식은 조건당 1런. '–' = 해당 센서를 다루지 않거나 미실행. 제안의 lso-mid 0/5 는 설계(능력 손실 없음). 오탐: 무고장 런에서 표시된 모든 검출기 0(항법 55런·비전 6런·Alibi 8런; Alibi 기본 문턱 변형은 전 런 경보라 제외)."]
+lines += ["", "항법·cf·lf 열(Autoware 진단·Yu·Huang&Su·제안)은 순정 bag 재생 셀당 45런; 비전 열(Won·Zhang·Lee)은 원시 기록 셀당 5런; Alibi Online MMD 는 센서별 특징에 무고장 보정 문턱(변형 a), 셀당 5–6런; RADAS 이식은 조건당 1런. '–' = 해당 센서를 다루지 않거나 미실행. 제안의 lso-mid 0/5 는 설계(능력 손실 없음). 오탐: 항법 평가(무고장 홀수 rep 26런 + 주입 전 창 597) 제안 1·Autoware 진단 1(같은 런)·Yu 0·Huang&Su 0; 비전 평가(무고장 3런 + 창 30) 전부 0; Alibi(nf 보정) 무고장 런×센서 8회 중 3회 경보; RADAS 주입 전 구간 5회 중 0. (Alibi 기본 문턱 변형은 전 런 경보라 제외.)"]
 open(f"{RES}/figs/detector_matrix.md", "w").write("\n".join(lines) + "\n")
 # figure
 fig, ax = plt.subplots(figsize=(12.5, 8.2))
@@ -78,11 +78,12 @@ for yb in (14, 11, 6):   # group separators: lidar | camera | gnss | imu  (row i
     ax.axhline(yb, color="black", lw=0.8)
 for xb in (1, 4, 6, 8): ax.axvline(xb, color="black", lw=0.8)
 for sp in ax.spines.values(): sp.set_linewidth(0.8)
-ax.text(0, -0.35, "Cell: detections / runs (median latency, simulation s).  Hatched: detector does not consume that sensor or was not run.  "
-        "Navigation rows and camera/LiDAR death: 45 runs per cell (bag replay); LiDAR/camera degradation rows: 5 runs (raw 2 Hz recordings); Alibi MMD: 5–6; RADAS: 1.",
-        fontsize=7.8, color="black", va="top")
-ax.text(0, -0.75, "Proposed lso-mid 0/5 is by design (no capability loss, no intervention).  False alarms on no-fault runs: 0 for every detector shown (Alibi with its default threshold alarmed on every run and is omitted).",
-        fontsize=7.8, color="black", va="top")
+foot = ("Cell: detections / runs (median latency, simulation s).  Hatched: detector does not consume that sensor or was not run.\n"
+        "Navigation rows and camera/LiDAR death: 45 runs per cell (bag replay); LiDAR/camera degradation rows: 5 runs (raw 2 Hz recordings); Alibi MMD: 5–6; RADAS: 1.\n"
+        "Proposed lso-mid 0/5 is by design (no capability loss, no intervention).\n"
+        "False alarms — navigation evaluation (26 no-fault runs + 597 pre-injection windows): Proposed 1, Autoware diag. 1 (same run), Yu 0, Huang & Su 0;\n"
+        "LiDAR/camera evaluation (3 no-fault runs + 30 windows): 0 for all;  Alibi (nf-calibrated): 3 of 8 no-fault run×sensor evaluations;  RADAS: 0 of 5 pre-injection windows.")
+ax.text(0, -0.35, foot, fontsize=7.8, color="black", va="top", linespacing=1.45)
 plt.tight_layout()
 for ext in ("png", "pdf"):
     fig.savefig(f"{RES}/figs/fig_detector_matrix.{ext}", dpi=200, bbox_inches="tight", facecolor="white")
