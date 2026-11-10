@@ -8,7 +8,7 @@
 
 | # | 파일 | 내용 | 자료·표본 | 생성 스크립트 | 비고 |
 |---|---|---|---|---|---|
-| F1 | `fig_noise_sweep_v5b_en.{png,pdf}` | **고장 세기 ↔ 감시 점수 ↔ 실제 성능** 4열: (a) LiDAR 성김 T, (b) LiDAR 강우 감쇠 R(동등 시정 m), (c) IMU 자이로 잡음 σ, (d) 카메라 가우시안 잡음 σ. 위 행 = 감시기 점수 중앙값, 아래 행 = Autoware 인식 재현율(0–26/26–50 m)·EKF 오차·신호등 인식 성공률 | 순정(감시기만, MRM off) 세기 사다리. 채우기 B 완료 후 **수준당 10런**(lso 7수준, lcl 7수준 rep 40–49, imn 4수준, cn 4수준) + 캠페인 운영점(mid/high, 1런 = 흰 마커) | `analysis/fig_noise_sweep_v5b_en.py` (국문판 `fig_noise_sweep_v5b.py`) | 핵심 기여 그림. **(d) 아래 행 신호등 지표는 런당 0/1(녹색 놓침)이라 계단형** → 연속 지표 `data/tl_acc.csv`(아래 3절)로 교체 작업 중 |
+| F1 | `fig_noise_sweep_v5b_en.{png,pdf}` | **고장 세기 ↔ 감시 점수 ↔ 실제 성능** 4열: (a) LiDAR 성김 T, (b) LiDAR 강우 감쇠 R(동등 시정 m), (c) IMU 자이로 잡음 σ, (d) 카메라 가우시안 잡음 σ. 위 행 = 감시기 점수 중앙값, 아래 행 = Autoware 인식 재현율(0–26/26–50 m)·EKF 오차·신호등 인식 성공률 | 순정(감시기만, MRM off) 세기 사다리. 채우기 B 완료 후 **수준당 10런**(lso 7수준, lcl 7수준 rep 40–49, imn 4수준, cn 4수준) + 캠페인 운영점(mid/high, 1런 = 흰 마커) | `analysis/fig_noise_sweep_v5b_en.py` (국문판 `fig_noise_sweep_v5b.py`) | 핵심 기여 그림. (d) 아래 행 = 런 단위 "초록 신호에 출발 성공" 비율(`stock_outcomes.csv` missed_green==0), **def 교통·t=10 주입 사다리 런만**(캠페인 mid/high 는 27 s 주입·교통 3종이라 섞지 않음). σ 5/10/20/30/45 각 10런 → 0.9/0.3/0.0/0.0/0.0; **σ 15·7 각 10런 추가 중**(`cn_fill_15_7.sh`, 11/11 새벽 자동 재생성·푸시) |
 | F2 | `fig_noise_sweep_rest_sensor.{png,pdf}` | F1과 같은 형식, 나머지 센서 고장(라이다/카메라 사망, 클러터 mid/high 등) | 11월 순정 매트릭스 수준당 ≈45런 | `analysis/fig_noise_sweep_rest.py` | 보조 |
 | F3 | `fig_noise_sweep_rest_nav.{png,pdf}` | F1과 같은 형식, 항법 고장(GNSS 위치 잡음·상관 바이어스·단절, IMU 바이어스·램프) | 동일 | 동일 | 보조 |
 | F4 | `fig_outcomes_3panel.{png,pdf}` | **대응 결과 분포** (a)(b) 논문 본 실험(제안: 계속 주행/대피/정지), (c) 순정 Autoware(정지·정체·충돌; 빗금 = 순정에만 있는 범주) | 조건당 45런 짝 맞춤 (교통 3종 × rep 0–14) | `analysis/fig_outcomes_3panel.py` | 행 값은 사용자 확정(아래 4절 ③) |
@@ -37,7 +37,7 @@
 |---|---|
 | `stock_outcomes.csv` | 순정 매트릭스 케이스별 결말 분류(충돌/순정 MRM/완주/정체/빨간불 대기/굳음 …) + missed_green 등 플래그. 생성 `analysis/stock_freeze.py` |
 | `cam_scores.csv` | bag에서 뽑은 감시기 점수 요약(런당 카메라/신호등/위치/라이다/인식/장애물 점수 중앙값). F1(d)·F2가 사용. 저장소 사본 `results/derived/` |
-| `tl_acc.csv` | **신호등 인식 정확도(연속 지표)**: GT 신호색이 있는 모든 틱에서 Autoware 인식 색 일치율(주입 전/후 분리). 생성 `analysis/tl_recog_acc.py`. 현재 cn σ5/10 r0–3, σ15/30 캠페인, σ20/45 r0–3 까지; 채우기 B 신규 런(σ 각 rep 4–9) 추가 계산 중 |
+| `tl_acc.csv` | (탐색용, 논문 미사용) 틱 단위 신호등 인식 일치율. GT 'tl' 열은 정지선 트리거 볼륨 안에서만 기록돼 **정차 시간에 좌우**(σ5 는 통과 2 s, σ10 은 적신호 대기 100 s) → 지표로 부적합. `results/derived/tl_approach_acc.csv`(접근 60 m 거리대 판)도 Autoware 가 주행 중 접근 구간에서는 거의 UNKNOWN 만 내고 정지선 도달 후에야 색을 내서(시간 필터) 무고장과 구분 불가, 그리고 무고장 bag 의 traffic_signals 메시지는 역직렬화 실패. 둘 다 `analysis/tl_recog_acc.py`, `analysis/tl_approach_acc.py` 에 남김 |
 | `lcl_sev_cfg.txt` | v5b 세기 모델 계수(a, b) — 러너 환경변수 `CDR_LCL_SEV_CFG` 로 주입 |
 | `ladder_fill_done.txt` | 채우기 B 완료 셀 목록(154/147; 7셀은 재실행 중복) |
 
@@ -62,6 +62,6 @@ PC 원자료: `experiments/results/live/<tag>.csv`(런당 감시기 요약), `re
 
 ## 6. 남은 일(2026-11-10 22:40)
 
-- [ ] 채우기 B 신규 런(cn σ 5/10/20/45 rep 3–9, lcl rep 44–49 1110 날짜) → `results/derived/cam_scores.csv`·`stock_outcomes.csv`·`tl_acc.csv` 갱신 → F1/F2 재생성(F1 스크립트의 lcl glob을 r4[0-9] 로 확장).
-- [ ] F1 (d) 아래 행을 `tl_acc.csv`의 acc_post(주입 후 인식 정확도)로 교체해 곡선을 매끄럽게.
+- [x] 채우기 B 신규 런 반영(cam_scores·stock_outcomes 갱신, lcl glob r4[0-9]) → F1 수준당 10런(11/10 23:30).
+- [ ] cn σ15·σ7 각 10런(`cn_fill_15_7.sh`, 약 2 h) → F1 자동 재생성·푸시. 끝나면 (d) 아래 행이 5/7/10/15/20/30/45 7점.
 - [ ] 선택: 단계당 15런(C안, +110런 ≈ 9 h)은 사용자 결정 대기.

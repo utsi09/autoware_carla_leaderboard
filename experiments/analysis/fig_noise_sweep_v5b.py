@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """fig_noise_sweep 의 (b) lcl 열을 v5b 세기 경로(α̂ 기반) 사다리(rep 40–43, 2026-11-09)로 교체한 판.
 (a) lso·(c) imn 은 원본(lite 스윕 로그) 그대로. (b) 위: LiDAR 점수 q(세기 경로)·인지 건강도(융합), 아래: Autoware 재현율.
-입력: results/noise_sweep_batch.log, results/noise_sweep_live.md(nf 기준), results/live/stock-lcl-*-def-r4[0-3]-*.csv
+입력: results/noise_sweep_batch.log, results/noise_sweep_live.md(nf 기준), results/live/stock-lcl-*-def-r4[0-9]-*.csv
 출력: results/figs/fig_noise_sweep_v5b.png / .pdf
 """
 import os, sys, re, csv, glob, collections
@@ -36,8 +36,8 @@ for ln in open(f"{RES}/noise_sweep_batch.log", errors="replace"):
     r["x"] = f(r["sev"].split(":")[0]); rows[(r["fault"], r["sev"], r["rep"])] = r
 rows = list(rows.values())
 # v5b lcl 사다리 (rep 40–43; CARLA_DIED 로 고장 미주입된 런은 S_lidar>0.95 로 제외)
-for p in sorted(glob.glob(f"{RES}/live/stock-lcl-*-def-r4[0-3]-*.csv")):
-    m = re.match(r"stock-lcl-(\d+)_(\d+)-def-r(\d+)-(1108|1109)_(\d{4})$", os.path.basename(p)[:-4])
+for p in sorted(glob.glob(f"{RES}/live/stock-lcl-*-def-r4[0-9]-*.csv")):
+    m = re.match(r"stock-lcl-(\d+)_(\d+)-def-r(\d+)-(1108|1109|1110)_(\d{4})$", os.path.basename(p)[:-4])
     if not m or (m.group(4), m.group(5)) < ("1108", "2353"): continue
     r = next(csv.DictReader(open(p))); q = f(r["S_lidar_front"])
     if q is None or q > 0.95: continue
@@ -49,6 +49,7 @@ SC = f"{RES}/derived"   # cam_scores.csv, gb_loc.csv (bag 추출 파생표)
 def _load(pth):
     return {r["tag"]: r for r in csv.DictReader(open(pth))} if os.path.exists(pth) else {}
 cam_tbl = _load(f"{SC}/cam_scores.csv"); out_tbl = _load(f"{RES}/stock_outcomes.csv")
+tla_tbl = _load(f"{SC}/tl_approach_acc.csv")   # 접근 구간(60 m, 주행 중) 신호등 인식 정확도 — analysis/tl_approach_acc.py
 nf_cn = []
 for pth in sorted(glob.glob(f"{RES}/live/stock-cn-*.csv") + glob.glob(f"{RES}/live/stock-nf-*.csv")):
     tag = os.path.basename(pth)[:-4]
@@ -60,8 +61,8 @@ for pth in sorted(glob.glob(f"{RES}/live/stock-cn-*.csv") + glob.glob(f"{RES}/li
         except ValueError: x = 0.0
     c = cam_tbl.get(tag, {}); o = out_tbl.get(tag, {})
     if m.group(1) == "cn" and f(c.get("cam")) is not None and f(c.get("cam")) > 0.9: continue   # CARLA_DIED 등 고장 미주입 런 제외
-    row = dict(fault=m.group(1), sev=sev, rep=m.group(4), outcome="ok", x=(0.0 if m.group(1) == "nf" else x),
-               cam=f(c.get("cam")), mg=f(o.get("missed_green")), ok=(None if f(o.get("missed_green")) is None else (1.0 if f(o.get("missed_green")) == 0 else 0.0)), S_front=None, R_h=None, R_far=None, e_lat=None, ATE=None, s_loc=None, S_perc=None)
+    row = dict(fault=m.group(1), sev=sev, rep=m.group(4), npc=m.group(3), ladder=(sev not in ("mid", "high")), outcome="ok", x=(0.0 if m.group(1) == "nf" else x),
+               cam=f(c.get("cam")), mg=f(o.get("missed_green")), tlacc=f(tla_tbl.get(tag, {}).get("acc")), ok=(None if f(o.get("missed_green")) is None else (1.0 if f(o.get("missed_green")) == 0 else 0.0)), S_front=None, R_h=None, R_far=None, e_lat=None, ATE=None, s_loc=None, S_perc=None)
     (nf_cn if m.group(1) == "nf" else rows).append(row)
 def nfmed_cn(k, stat=np.median):
     v = [r[k] for r in nf_cn if r.get(k) is not None]; return (float(stat(v)), len(v)) if v else (None, 0)
@@ -79,6 +80,7 @@ def nfmed(k):
 def series(fault, key):
     g = collections.defaultdict(list)
     for r in rows:
+        if fault == "cn" and key == "ok" and not (r.get("npc") == "def" and r.get("ladder")): continue   # (d) 아래 행: def 교통·t=10 주입 사다리 런만(프로토콜 통일; 캠페인 mid/high 는 27 s 주입·교통 3종)
         if r["fault"] == fault and r.get(key) is not None and r["x"] is not None: g[r["x"]].append(r[key])
     return g
 
