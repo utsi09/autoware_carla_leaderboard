@@ -11,6 +11,14 @@ FAMILY = {"lso": "LiDAR\ndegradation", "lcl": "LiDAR\ndegradation", "lf": "LiDAR
 FAMILIES = ["LiDAR\ndegradation", "LiDAR\ndeath", "Camera\ndegradation", "Camera\ndeath", "GNSS", "IMU"]
 DETS = [("ours", "Proposed"), ("b0", "Autoware diagnostics"), ("won", "Won 2023 (LiDAR bitmap)"), ("zh", "Zhang 2024 (LiDAR distribution)"), ("lee", "Lee 2022 (camera CNN)"),
         ("yu", "Yu 2021 (state χ²)"), ("gos", "Huang & Su (EKF residual)"), ("radas", "RADAS (stream rate)"), ("mmd", "Alibi online MMD")]
+
+# 검출기가 실제로 소비하는 센서 계열(구조적 적용 범위). 여기 없는 계열은 평가했더라도 "볼 수 없음"(N/A) — 0 이 아니라 빗금.
+ALL = set(FAMILIES)
+APPLICABLE = {"ours": ALL, "b0": ALL, "radas": ALL, "mmd": ALL,
+              "won": {"LiDAR\ndegradation", "LiDAR\ndeath"}, "zh": {"LiDAR\ndegradation", "LiDAR\ndeath"},
+              "lee": {"Camera\ndegradation", "Camera\ndeath"},
+              "yu": {"GNSS", "IMU", "LiDAR\ndeath"}, "gos": {"GNSS", "IMU", "LiDAR\ndeath"}}   # EKF 잔차 계열: NDT(라이다) 자세는 EKF 입력이라 라이다 사망은 적용, 카메라는 EKF 와 무관
+def applicable(det, fault): return FAMILY[fault] in APPLICABLE[det]
 def _f(x):
     try: return float(x)
     except (TypeError, ValueError): return None

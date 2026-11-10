@@ -9,6 +9,7 @@ import matplotlib as mpl; mpl.use("Agg")
 mpl.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Nimbus Roman", "Liberation Serif", "STIXGeneral"], "mathtext.fontset": "stix",
                      "axes.linewidth": 0.8, "font.size": 9})
 import matplotlib.pyplot as plt
+from detector_data import applicable
 from matplotlib.patches import Rectangle
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "results")
 ROWS = [("lso", "mid", "LiDAR sparsification (mid)"), ("lso", "high", "LiDAR sparsification (high)"), ("lcl", "mid", "LiDAR clutter (mid)"), ("lcl", "high", "LiDAR clutter (high)"), ("lf", "mid", "LiDAR death"),
@@ -67,6 +68,9 @@ for i, (f, s, lab) in enumerate(ROWS):
         if v is None:
             ax.add_patch(Rectangle((j, y), 1, 1, facecolor="#f2f2f2", edgecolor="white", hatch="///", linewidth=0.8)); continue
         k, n, lat = v; rate = k / n if n else 0
+        if not applicable(c, f):   # 돌리긴 했지만 그 센서를 다루지 않는 검출기 → 구조적으로 볼 수 없음(교차 오경보 0 확인용)
+            ax.add_patch(Rectangle((j, y), 1, 1, facecolor="#f2f2f2", edgecolor="white", hatch="///", linewidth=0.8))
+            ax.text(j + 0.5, y + 0.5, f"{k}/{n}", ha="center", va="center", fontsize=7.6, color="#777777"); continue
         col = plt.cm.Blues(0.15 + 0.75 * rate) if n else "#f2f2f2"
         ax.add_patch(Rectangle((j, y), 1, 1, facecolor=col, edgecolor="white", linewidth=0.8))
         txt = f"{k}/{n}" + (f"\n{lat:.1f} s" if lat is not None else ""); 
@@ -78,7 +82,7 @@ for yb in (14, 11, 6):   # group separators: lidar | camera | gnss | imu  (row i
     ax.axhline(yb, color="black", lw=0.8)
 for xb in (1, 4, 6, 8): ax.axvline(xb, color="black", lw=0.8)
 for sp in ax.spines.values(): sp.set_linewidth(0.8)
-foot = ("Cell: detections / runs (median latency, simulation s).  Hatched: detector does not consume that sensor or was not run.\n"
+foot = ("Cell: detections / runs (median latency, simulation s).  Hatched: detector does not consume that sensor or was not run; grey numbers = run on that condition anyway (no cross-sensor false alarm).\n"
         "Navigation rows and camera/LiDAR death: 45 runs per cell (bag replay); LiDAR/camera degradation rows: 5 runs (raw 2 Hz recordings); Alibi MMD: 5–6; RADAS: 1.\n"
         "Proposed lso-mid 0/5 is by design (no capability loss, no intervention).\n"
         "False alarms — navigation evaluation (26 no-fault runs + 597 pre-injection windows): Proposed 1, Autoware diag. 1 (same run), Yu 0, Huang & Su 0;\n"

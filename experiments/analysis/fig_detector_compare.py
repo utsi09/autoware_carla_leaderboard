@@ -6,7 +6,7 @@
 lso-mid(능력 손실 없음, 제안은 설계상 미개입)는 모든 검출기에서 제외. 자료: analysis/detector_data.py. 오탐 수치는 각 보고서(results/*/report.md)에서 옮김."""
 import os, sys, numpy as np, statistics as st
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from detector_data import load_cells, ROWS, FAMILY, FAMILIES, DETS, RES
+from detector_data import load_cells, ROWS, FAMILY, FAMILIES, DETS, RES, APPLICABLE, applicable
 import matplotlib as mpl; mpl.use("Agg")
 mpl.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Nimbus Roman", "Liberation Serif", "STIXGeneral"], "mathtext.fontset": "stix",
                      "axes.linewidth": 0.8, "font.size": 9, "xtick.direction": "in", "ytick.direction": "in", "axes.grid": False, "hatch.linewidth": 0.5})
@@ -23,16 +23,18 @@ def fam_stats(det):
     out = []
     for fam in FAMILIES:
         k = n = 0
-        for f, s in COND:
-            if FAMILY[f] != fam: continue
-            c = cells.get((f, s, det))
-            if c: k += c[0]; n += c[1]
-        out.append((k / n if n else None, k, n))
+        if fam in APPLICABLE[det]:
+            for f, s in COND:
+                if FAMILY[f] != fam: continue
+                c = cells.get((f, s, det))
+                if c: k += c[0]; n += c[1]
+        out.append((k / n if n else None, k, n))   # None = 센서를 다루지 않거나 평가 안 함 → 빗금
     return out
-def lats(det): return [l for f, s in COND for l in cells.get((f, s, det), (0, 0, []))[2]]
+def lats(det): return [l for f, s in COND if applicable(det, f) for l in cells.get((f, s, det), (0, 0, []))[2]]
 def kn(det):
     k = n = 0
     for f, s in COND:
+        if not applicable(det, f): continue
         c = cells.get((f, s, det))
         if c: k += c[0]; n += c[1]
     return k, n
@@ -62,7 +64,7 @@ for i, (d, name) in enumerate(DETS):
     ax.set_title(name.replace(" (", "\n("), fontsize=8.6, pad=6, fontweight="bold" if d == "ours" else "normal")
     for lab in ax.get_xticklabels(): lab.set_y(lab.get_position()[1] - 0.06)
 fig.text(0.03, 0.955, "(a) Detection rate by fault family", fontsize=10.5, ha="left")
-fig.legend(handles=[Patch(facecolor="#f0f0f0", edgecolor="#b0b0b0", hatch="////", label="not applicable: sensor not consumed / not evaluated"),
+fig.legend(handles=[Patch(facecolor="#f0f0f0", edgecolor="#b0b0b0", hatch="////", label="not applicable: detector does not consume that sensor, or not evaluated"),
                     Line2D([], [], color="#888888", ls="--", lw=0.9, label="proposed (reference outline)"),
                     Line2D([], [], marker="o", color="#555", lw=0, ms=4, mec="black", label="evaluated family: detection rate (0 = evaluated, missed)"),
                     Patch(facecolor="#bbbbbb", alpha=0.6, edgecolor="black", label="(b) box: median and interquartile range of detected cases"),
