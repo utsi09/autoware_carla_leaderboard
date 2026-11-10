@@ -13,6 +13,7 @@
 | F3 | `fig_noise_sweep_rest_nav.{png,pdf}` | F1과 같은 형식, 항법 고장(GNSS 위치 잡음·상관 바이어스·단절, IMU 바이어스·램프) | 동일 | 동일 | 보조 |
 | F4 | `fig_outcomes_3panel.{png,pdf}` | **대응 결과 분포** (a)(b) 논문 본 실험(제안: 계속 주행/대피/정지), (c) 순정 Autoware(정지·정체·충돌; 빗금 = 순정에만 있는 범주) | 조건당 45런 짝 맞춤 (교통 3종 × rep 0–14) | `analysis/fig_outcomes_3panel.py` | 행 값은 사용자 확정(아래 4절 ③) |
 | F5 | `fig_detector_matrix.{png,pdf}` + `reports/detector_matrix.md` | **검출기 비교 행렬** 19 고장조건 × 9 검출기(Autoware 진단, Won 2023, Zhang 2024, Lee 2022, Yu 2021, Huang&Su, RADAS, Alibi Online MMD, 제안). 셀 = 검출 k/n (중앙 지연 s) | 항법·사망 열 셀당 45런(bag 재생), 비전 열 5런(원시 2 Hz 기록), Alibi 5–6, RADAS 1 | `analysis/fig_detector_matrix.py` | 무고장 오탐: 표시된 모든 검출기 0 |
+| F5b | `fig_detector_compare.{png,pdf}` | **검출기 비교 벤치마크식 3패널**: (a) 검출기별 레이더(고장 계열 6축 검출률, 회색 점선 = 제안 윤곽), (b) 검출 지연 분포(검출된 케이스, 로그 s), (c) 포괄 범위(18 조건 평균 검출률) 대 중앙 지연 산점도 | F5와 같은 자료(lso-mid 는 전 검출기에서 제외) | `analysis/fig_detector_compare.py` (공용 로더 `analysis/detector_data.py`) | 제안: 포괄 1.00·중앙 지연 2.2 s. Yu/Huang&Su 0.56·1.1–1.3 s, Autoware 진단 0.39·7 s, Alibi 0.28·6.4 s, Zhang 0.17·0.7 s, Lee 0.11·0.7 s, RADAS 0.11·3.1 s, Won 0.01 |
 | F6 | `fig_vision_fdi.{png,pdf}` | 비전 검출기 상세(Won/Zhang/Lee vs 제안): 조건별 검출률·지연 | 셀당 5런 | `analysis/fig_vision_fdi.py` | F5의 비전 부분 확대 |
 | F7 | `fig_baseline_fdi.{png,pdf}` | 항법 검출기 상세(Yu/Huang&Su/Autoware 진단 vs 제안) | 셀당 45런 | `analysis/fig_baseline_fdi.py` | F5의 항법 부분 확대 |
 | F8 | `fig_encounter.png` | 조우 블록: 제동·정지시간·차체 간격·보행자 접촉(고장 × 팔) | 조우 실험 | `analysis/fig_encounter.py` | 이전 커밋에 설명 |
