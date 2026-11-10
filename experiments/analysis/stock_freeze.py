@@ -135,6 +135,9 @@ def analyse(gt_path):
     out["deg_dist_m"] = jr.get("deg_dist_m", "")
     out["lane_pct"] = jr.get("lane_block_pct", "")
     out["min_gap_m"] = jr.get("min_gap_m", "")
+    # [2026-11-08] 하네스 실패 제외: 출발 직후 Autoware 비상정지에서 못 풀려 한 번도 안 움직이고(최대 변위 < 1 m) 고장도 안 걸린 케이스
+    if not post and ego and max(math.hypot(float(r["x"]) - float(ego[0]["x"]), float(r["y"]) - float(ego[0]["y"])) for r in ego) < 1.0:
+        raise ValueError("harness flake (ego never moved, fault never injected) — excluded")
     if not post:                                  # nf 등 고장 없음
         post = ego[len(ego) // 2:]                # 후반부를 '고장 뒤' 대용으로
         out["no_fault"] = 1

@@ -1,0 +1,2 @@
+- **xcheck(02:35) 통과**: 원시 점군(lad-lcl-*, 2 Hz) 오프라인 α̂ vs 온라인 aema 28런 전부 |Δα̂| ≤ 1e-4, R̂ 차 ≤ 0.1 mm/h; kbase 0.00402~0.00403 모두 동일(CARLA 강도 exp(−0.004d) 결정적). 이론 α(0.01·R^0.6)와도 일치.
+- **사용자 결정(11/09 16:00)**: 폐루프 등급 대응 그림(fig_lcl_graded) 은 논문에서 뺌 — 건강도–세기 관계는 세기 그림 lcl 패널로 충분. **재튜닝 C 잔여(13)·D(nf 90) 중단**: `experiments/lcl_retune_ext.sh` 를 로그만 남기는 스텁으로 교체(원본 `results/retune_ext/lcl_retune_ext.sh.disabled_1109_1600`), fill_then_retune.sh 가 채우기 뒤 exec 해도 즉시 종료. 확보된 재튜닝 데이터: A 90, B 90, C 12(rep 15–17 일부). 체인은 사다리 채우기 B(147런, ≈11/10 03:30 종료)로 끝남.

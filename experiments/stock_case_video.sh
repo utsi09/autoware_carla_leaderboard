@@ -35,6 +35,8 @@ FPID=""
 if [ -n "$WID" ] && kill -0 $RPID 2>/dev/null; then
   # [2026-11-06] 창 id 캡처는 RViz 가 창을 다시 만들면 옛 id 가 검은 화면만 내보냄(검은 녹화 11건).
   #   창의 화면 영역(좌표·크기)을 잡아 영역 캡처로 바꿈; 영역을 못 읽으면 예전 방식.
+  # [2026-11-09] RViz 창을 오른쪽 모니터(3840x2160 @ +2160+1680) 우측으로 옮기고 항상-위로: 터미널이 덮어 터미널이 녹화되던 사고 방지
+  python3 experiments/rviz_place.py "$WID" 3840 1680 2>/dev/null; sleep 1.5
   GEO=$(xwininfo -id "$WID" 2>/dev/null | awk '/Absolute upper-left X/{x=$NF} /Absolute upper-left Y/{y=$NF} /^ *Width/{w=$NF} /^ *Height/{h=$NF} END{if(w>0&&h>0) printf "%dx%d %d,%d", w-(w%2), h-(h%2), x, y}')
   if [ -n "$GEO" ]; then read GSZ GOFF <<<"$GEO"; GRAB=(-video_size "$GSZ" -i "$DISPLAY+$GOFF"); else GRAB=(-window_id "$WID" -i "$DISPLAY"); fi
   ffmpeg -hide_banner -loglevel error -y -f x11grab -framerate 10 "${GRAB[@]}" -t 900 \

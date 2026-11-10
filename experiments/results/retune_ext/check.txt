@@ -1,0 +1,2 @@
+rain frames 1906, compared 1906, max |dq| = 0.0000, trip at 430
+rain frames 2104, compared 2104, max |dq| = 0.0000, trip at 338

@@ -1,0 +1,153 @@
+tag,key,R,sev,rep,method,S_lidar,S_perc,S_obs,S_sector_F,t_fault,t_end,n_frames
+lcl-high-agg-r15-1109_1014,retune B lcl high agg 15 ours,25.0,high,15,ours,0.287,0.583,0.328,0.287,92.671,111.721,383
+lcl-high-agg-r15-1109_1016,retune B lcl high agg 15 baseline,25.0,high,15,baseline,0.287,0.583,0.328,0.287,92.561,110.811,366
+lcl-high-agg-r16-1109_1027,retune B lcl high agg 16 ours,25.0,high,16,ours,0.287,0.597,0.328,0.287,104.828,129.728,499
+lcl-high-agg-r16-1109_1029,retune B lcl high agg 16 baseline,25.0,high,16,baseline,0.287,0.593,0.328,0.287,104.299,114.899,213
+lcl-high-agg-r17-1109_1040,retune B lcl high agg 17 ours,25.0,high,17,ours,0.282,0.575,0.323,0.282,86.545,109.945,470
+lcl-high-agg-r17-1109_1043,retune B lcl high agg 17 baseline,25.0,high,17,baseline,0.287,0.581,0.329,0.287,86.86,101.96,303
+lcl-high-agg-r18-1109_1053,retune B lcl high agg 18 ours,25.0,high,18,ours,0.285,0.596,0.327,0.285,99.472,131.422,640
+lcl-high-agg-r18-1109_1056,retune B lcl high agg 18 baseline,25.0,high,18,baseline,0.287,0.59,0.328,0.287,99.594,110.944,228
+lcl-high-agg-r19-1109_1107,retune B lcl high agg 19 ours,25.0,high,19,ours,0.287,0.577,0.328,0.287,89.921,108.071,364
+lcl-high-agg-r19-1109_1109,retune B lcl high agg 19 baseline,25.0,high,19,baseline,0.287,0.579,0.328,0.287,90.71,106.16,311
+lcl-high-def-r15-1109_1005,retune B lcl high def 15 ours,25.0,high,15,ours,0.287,0.582,0.328,0.287,86.837,101.687,298
+lcl-high-def-r15-1109_1007,retune B lcl high def 15 baseline,25.0,high,15,baseline,0.287,0.583,0.328,0.287,86.392,105.342,380
+lcl-high-def-r16-1109_1018,retune B lcl high def 16 ours,25.0,high,16,ours,0.287,0.586,0.328,0.287,94.937,108.137,265
+lcl-high-def-r16-1109_1020,retune B lcl high def 16 baseline,25.0,high,16,baseline,0.287,0.596,0.327,0.287,94.808,117.358,453
+lcl-high-def-r17-1109_1032,retune B lcl high def 17 ours,25.0,high,17,ours,0.283,0.595,0.326,0.283,90.406,117.956,552
+lcl-high-def-r17-1109_1034,retune B lcl high def 17 baseline,25.0,high,17,baseline,0.287,0.579,0.328,0.287,90.704,99.454,176
+lcl-high-def-r18-1109_1045,retune B lcl high def 18 ours,25.0,high,18,ours,0.287,0.571,0.328,0.287,82.268,104.218,441
+lcl-high-def-r18-1109_1047,retune B lcl high def 18 baseline,25.0,high,18,baseline,0.287,0.566,0.328,0.287,81.856,103.856,442
+lcl-high-def-r19-1109_1058,retune B lcl high def 19 ours,25.0,high,19,ours,0.287,0.577,0.328,0.287,82.887,104.737,439
+lcl-high-def-r19-1109_1100,retune B lcl high def 19 baseline,25.0,high,19,baseline,0.287,0.579,0.328,0.287,83.039,104.339,428
+lcl-high-def-r20-1109_1111,retune B lcl high def 20 ours,25.0,high,20,ours,0.287,0.587,0.328,0.287,95.861,112.511,334
+lcl-high-none-r15-1109_1009,retune B lcl high none 15 ours,25.0,high,15,ours,nan,nan,nan,nan,1794186700.203764,82.03,0
+lcl-high-none-r15-1109_1012,retune B lcl high none 15 baseline,25.0,high,15,baseline,0.287,0.59,0.328,0.287,104.006,113.556,193
+lcl-high-none-r16-1109_1023,retune B lcl high none 16 ours,25.0,high,16,ours,nan,nan,nan,nan,1794187494.5917313,82.253,0
+lcl-high-none-r16-1109_1025,retune B lcl high none 16 baseline,25.0,high,16,baseline,0.287,0.577,0.328,0.287,89.357,105.407,323
+lcl-high-none-r17-1109_1036,retune B lcl high none 17 ours,25.0,high,17,ours,0.287,0.576,0.328,0.287,81.049,82.849,37
+lcl-high-none-r17-1109_1038,retune B lcl high none 17 baseline,25.0,high,17,baseline,0.286,0.567,0.327,0.286,79.618,81.518,39
+lcl-high-none-r18-1109_1049,retune B lcl high none 18 ours,25.0,high,18,ours,nan,nan,nan,nan,1794189074.23192,79.194,0
+lcl-high-none-r18-1109_1051,retune B lcl high none 18 baseline,25.0,high,18,baseline,nan,nan,nan,nan,1794189201.0960345,81.017,0
+lcl-high-none-r19-1109_1102,retune B lcl high none 19 ours,25.0,high,19,ours,nan,nan,nan,nan,1794189877.330537,81.891,0
+lcl-high-none-r19-1109_1105,retune B lcl high none 19 baseline,25.0,high,19,baseline,nan,nan,nan,nan,1794190016.2260337,81.832,0
+lcl-mid-agg-r15-1109_0252,retune A lcl mid agg 15 ours,5.0,mid,15,ours,0.976,0.983,0.976,0.972,50.591,72.291,165
+lcl-mid-agg-r15-1109_0254,retune A lcl mid agg 15 baseline,5.0,mid,15,baseline,0.575,0.771,0.624,0.575,85.214,340.764,5112
+lcl-mid-agg-r16-1109_0320,retune A lcl mid agg 16 ours,5.0,mid,16,ours,0.575,0.773,0.624,0.575,101.952,290.202,3766
+lcl-mid-agg-r16-1109_0325,retune A lcl mid agg 16 baseline,5.0,mid,16,baseline,0.575,0.772,0.624,0.575,100.938,338.138,4745
+lcl-mid-agg-r17-1109_0351,retune A lcl mid agg 17 ours,5.0,mid,17,ours,0.575,0.772,0.624,0.575,97.643,360.243,5254
+lcl-mid-agg-r17-1109_0356,retune A lcl mid agg 17 baseline,5.0,mid,17,baseline,0.575,0.772,0.624,0.575,97.686,356.086,5169
+lcl-mid-agg-r18-1109_0422,retune A lcl mid agg 18 ours,5.0,mid,18,ours,0.575,0.772,0.624,0.575,107.336,295.936,3774
+lcl-mid-agg-r18-1109_0427,retune A lcl mid agg 18 baseline,5.0,mid,18,baseline,0.575,0.772,0.624,0.575,108.245,358.845,5013
+lcl-mid-agg-r19-1109_0454,retune A lcl mid agg 19 ours,5.0,mid,19,ours,0.575,0.772,0.624,0.575,101.441,310.841,4190
+lcl-mid-agg-r19-1109_0458,retune A lcl mid agg 19 baseline,5.0,mid,19,baseline,0.574,0.772,0.624,0.574,101.939,344.539,4853
+lcl-mid-agg-r20-1109_0525,retune A lcl mid agg 20 ours,5.0,mid,20,ours,0.981,0.986,0.979,0.977,49.468,71.218,178
+lcl-mid-agg-r20-1109_0526,retune A lcl mid agg 20 baseline,5.0,mid,20,baseline,0.575,0.772,0.624,0.575,89.178,355.578,5330
+lcl-mid-agg-r21-1109_0549,retune A lcl mid agg 21 ours,5.0,mid,21,ours,0.575,0.773,0.624,0.575,95.107,299.607,4091
+lcl-mid-agg-r21-1109_0554,retune A lcl mid agg 21 baseline,5.0,mid,21,baseline,0.575,0.772,0.624,0.575,95.076,359.076,5281
+lcl-mid-agg-r22-1109_0620,retune A lcl mid agg 22 ours,5.0,mid,22,ours,0.575,0.773,0.624,0.575,108.157,358.357,5006
+lcl-mid-agg-r22-1109_0626,retune A lcl mid agg 22 baseline,5.0,mid,22,baseline,0.575,0.772,0.624,0.575,108.347,244.497,2724
+lcl-mid-agg-r23-1109_0651,retune A lcl mid agg 23 ours,5.0,mid,23,ours,0.575,0.773,0.624,0.575,83.766,309.316,4513
+lcl-mid-agg-r23-1109_0656,retune A lcl mid agg 23 baseline,5.0,mid,23,baseline,0.575,0.772,0.624,0.575,83.727,349.877,5325
+lcl-mid-agg-r24-1109_0724,retune A lcl mid agg 24 ours,5.0,mid,24,ours,0.575,0.772,0.624,0.575,80.19,359.34,5585
+lcl-mid-agg-r24-1109_0730,retune A lcl mid agg 24 baseline,5.0,mid,24,baseline,0.575,0.772,0.624,0.575,79.281,360.131,5618
+lcl-mid-agg-r25-1109_0754,retune A lcl mid agg 25 ours,5.0,mid,25,ours,0.575,0.772,0.624,0.575,90.099,302.049,4240
+lcl-mid-agg-r25-1109_0759,retune A lcl mid agg 25 baseline,5.0,mid,25,baseline,0.575,0.772,0.624,0.575,89.865,348.265,5169
+lcl-mid-agg-r26-1109_0821,retune A lcl mid agg 26 ours,5.0,mid,26,ours,0.575,0.773,0.624,0.575,103.627,353.377,4997
+lcl-mid-agg-r26-1109_0827,retune A lcl mid agg 26 baseline,5.0,mid,26,baseline,0.575,0.773,0.624,0.575,107.128,355.128,4962
+lcl-mid-agg-r27-1109_0853,retune A lcl mid agg 27 ours,5.0,mid,27,ours,0.575,0.772,0.624,0.575,95.681,342.731,4943
+lcl-mid-agg-r27-1109_0858,retune A lcl mid agg 27 baseline,5.0,mid,27,baseline,0.575,0.772,0.624,0.575,96.333,357.033,5215
+lcl-mid-agg-r28-1109_0924,retune A lcl mid agg 28 ours,5.0,mid,28,ours,0.575,0.772,0.624,0.575,110.14,296.69,3732
+lcl-mid-agg-r28-1109_0929,retune A lcl mid agg 28 baseline,5.0,mid,28,baseline,0.575,0.773,0.624,0.575,107.988,347.238,4786
+lcl-mid-agg-r29-1109_0955,retune A lcl mid agg 29 ours,5.0,mid,29,ours,0.575,0.773,0.624,0.575,102.612,306.162,4073
+lcl-mid-agg-r29-1109_1000,retune A lcl mid agg 29 baseline,5.0,mid,29,baseline,0.575,0.773,0.624,0.575,103.938,310.488,4133
+lcl-mid-def-r15-1109_0230,retune A lcl mid def 15 ours,5.0,mid,15,ours,0.575,0.773,0.624,0.575,99.623,296.223,3934
+lcl-mid-def-r15-1109_0236,retune A lcl mid def 15 baseline,5.0,mid,15,baseline,0.575,0.772,0.624,0.575,99.36,358.21,5179
+lcl-mid-def-r16-1109_0259,retune A lcl mid def 16 ours,5.0,mid,16,ours,0.575,0.772,0.624,0.575,111.718,297.968,3726
+lcl-mid-def-r16-1109_0304,retune A lcl mid def 16 baseline,5.0,mid,16,baseline,0.575,0.773,0.624,0.575,111.901,359.651,4957
+lcl-mid-def-r17-1109_0330,retune A lcl mid def 17 ours,5.0,mid,17,ours,0.575,0.773,0.624,0.575,103.552,344.402,4818
+lcl-mid-def-r17-1109_0335,retune A lcl mid def 17 baseline,5.0,mid,17,baseline,0.575,0.773,0.624,0.575,103.637,340.887,4746
+lcl-mid-def-r18-1109_0402,retune A lcl mid def 18 ours,5.0,mid,18,ours,0.575,0.772,0.624,0.575,111.838,310.588,3977
+lcl-mid-def-r18-1109_0407,retune A lcl mid def 18 baseline,5.0,mid,18,baseline,0.575,0.774,0.624,0.575,111.023,374.123,5264
+lcl-mid-def-r19-1109_0432,retune A lcl mid def 19 ours,5.0,mid,19,ours,0.575,0.773,0.624,0.575,98.051,338.001,4800
+lcl-mid-def-r19-1109_0438,retune A lcl mid def 19 baseline,5.0,mid,19,baseline,0.575,0.773,0.624,0.575,98.036,355.486,5151
+lcl-mid-def-r20-1109_0504,retune A lcl mid def 20 ours,5.0,mid,20,ours,0.575,0.773,0.624,0.575,107.42,351.02,4873
+lcl-mid-def-r20-1109_0509,retune A lcl mid def 20 baseline,5.0,mid,20,baseline,0.575,0.773,0.625,0.575,110.511,354.511,4881
+lcl-mid-def-r21-1109_0532,retune A lcl mid def 21 ours,5.0,mid,21,ours,0.981,0.985,0.978,0.971,49.829,71.579,166
+lcl-mid-def-r21-1109_0533,retune A lcl mid def 21 baseline,5.0,mid,21,baseline,0.575,0.772,0.624,0.575,78.553,377.903,5988
+lcl-mid-def-r22-1109_0559,retune A lcl mid def 22 ours,5.0,mid,22,ours,0.575,0.772,0.624,0.575,88.854,374.004,5704
+lcl-mid-def-r22-1109_0605,retune A lcl mid def 22 baseline,5.0,mid,22,baseline,0.575,0.772,0.624,0.575,89.138,310.488,4428
+lcl-mid-def-r23-1109_0630,retune A lcl mid def 23 ours,5.0,mid,23,ours,0.575,0.773,0.624,0.575,97.442,378.892,5630
+lcl-mid-def-r23-1109_0636,retune A lcl mid def 23 baseline,5.0,mid,23,baseline,0.575,0.772,0.624,0.575,98.194,297.744,3992
+lcl-mid-def-r24-1109_0701,retune A lcl mid def 24 ours,5.0,mid,24,ours,0.575,0.773,0.624,0.575,88.151,456.401,7366
+lcl-mid-def-r24-1109_0708,retune A lcl mid def 24 baseline,5.0,mid,24,baseline,0.575,0.772,0.624,0.575,86.426,351.026,5294
+lcl-mid-def-r25-1109_0735,retune A lcl mid def 25 ours,5.0,mid,25,ours,0.575,0.772,0.624,0.575,78.312,353.512,5506
+lcl-mid-def-r25-1109_0740,retune A lcl mid def 25 baseline,5.0,mid,25,baseline,0.575,0.772,0.624,0.575,79.203,287.753,4173
+lcl-mid-def-r26-1109_0804,retune A lcl mid def 26 ours,5.0,mid,26,ours,0.575,0.772,0.624,0.575,103.409,322.559,4384
+lcl-mid-def-r26-1109_0809,retune A lcl mid def 26 baseline,5.0,mid,26,baseline,0.9835,0.987,0.982,0.979,49.26,71.01,168
+lcl-mid-def-r27-1109_0832,retune A lcl mid def 27 ours,5.0,mid,27,ours,0.575,0.772,0.624,0.575,108.405,300.855,3851
+lcl-mid-def-r27-1109_0837,retune A lcl mid def 27 baseline,5.0,mid,27,baseline,0.575,0.773,0.624,0.575,108.87,367.17,5167
+lcl-mid-def-r28-1109_0904,retune A lcl mid def 28 ours,5.0,mid,28,ours,0.575,0.772,0.624,0.575,86.484,360.684,5485
+lcl-mid-def-r28-1109_0909,retune A lcl mid def 28 baseline,5.0,mid,28,baseline,0.575,0.773,0.624,0.575,86.564,278.264,3836
+lcl-mid-def-r29-1109_0934,retune A lcl mid def 29 ours,5.0,mid,29,ours,0.575,0.772,0.624,0.575,95.481,357.481,5242
+lcl-mid-def-r29-1109_0940,retune A lcl mid def 29 baseline,5.0,mid,29,baseline,0.575,0.772,0.624,0.575,95.43,353.88,5170
+lcl-mid-none-r15-1109_0242,retune A lcl mid none 15 ours,5.0,mid,15,ours,0.575,0.773,0.624,0.575,106.337,337.787,4631
+lcl-mid-none-r15-1109_0247,retune A lcl mid none 15 baseline,5.0,mid,15,baseline,0.575,0.773,0.624,0.575,106.742,311.542,4098
+lcl-mid-none-r16-1109_0310,retune A lcl mid none 16 ours,5.0,mid,16,ours,0.575,0.773,0.624,0.575,108.427,329.527,4424
+lcl-mid-none-r16-1109_0315,retune A lcl mid none 16 baseline,5.0,mid,16,baseline,0.575,0.773,0.624,0.575,108.779,329.779,4421
+lcl-mid-none-r17-1109_0341,retune A lcl mid none 17 ours,5.0,mid,17,ours,0.575,0.772,0.624,0.575,86.146,337.746,5034
+lcl-mid-none-r17-1109_0346,retune A lcl mid none 17 baseline,5.0,mid,17,baseline,0.575,0.771,0.624,0.575,86.547,329.747,4865
+lcl-mid-none-r18-1109_0412,retune A lcl mid none 18 ours,5.0,mid,18,ours,0.575,0.772,0.624,0.575,103.913,296.513,3853
+lcl-mid-none-r18-1109_0417,retune A lcl mid none 18 baseline,5.0,mid,18,baseline,0.575,0.772,0.624,0.575,104.699,330.299,4514
+lcl-mid-none-r19-1109_0443,retune A lcl mid none 19 ours,5.0,mid,19,ours,0.575,0.773,0.624,0.575,102.623,311.323,4175
+lcl-mid-none-r19-1109_0448,retune A lcl mid none 19 baseline,5.0,mid,19,baseline,0.575,0.772,0.624,0.575,102.36,311.01,4175
+lcl-mid-none-r20-1109_0514,retune A lcl mid none 20 ours,5.0,mid,20,ours,0.575,0.772,0.624,0.575,92.524,353.674,5224
+lcl-mid-none-r20-1109_0520,retune A lcl mid none 20 baseline,5.0,mid,20,baseline,0.575,0.772,0.624,0.575,92.308,338.008,4915
+lcl-mid-none-r21-1109_0539,retune A lcl mid none 21 ours,5.0,mid,21,ours,0.575,0.772,0.624,0.575,91.288,329.138,4758
+lcl-mid-none-r21-1109_0544,retune A lcl mid none 21 baseline,5.0,mid,21,baseline,0.575,0.772,0.624,0.575,90.912,329.212,4767
+lcl-mid-none-r22-1109_0610,retune A lcl mid none 22 ours,5.0,mid,22,ours,0.574,0.772,0.624,0.574,102.108,310.758,4175
+lcl-mid-none-r22-1109_0615,retune A lcl mid none 22 baseline,5.0,mid,22,baseline,0.575,0.772,0.624,0.575,102.906,330.306,4549
+lcl-mid-none-r23-1109_0641,retune A lcl mid none 23 ours,5.0,mid,23,ours,0.575,0.772,0.624,0.575,83.06,329.51,4931
+lcl-mid-none-r23-1109_0646,retune A lcl mid none 23 baseline,5.0,mid,23,baseline,0.575,0.772,0.625,0.575,83.293,329.843,4932
+lcl-mid-none-r24-1109_0714,retune A lcl mid none 24 ours,5.0,mid,24,ours,0.575,0.772,0.624,0.575,102.56,329.56,4542
+lcl-mid-none-r24-1109_0719,retune A lcl mid none 24 baseline,5.0,mid,24,baseline,0.575,0.772,0.625,0.575,102.693,337.793,4703
+lcl-mid-none-r25-1109_0745,retune A lcl mid none 25 ours,5.0,mid,25,ours,0.575,0.772,0.624,0.575,89.768,340.418,5015
+lcl-mid-none-r25-1109_0750,retune A lcl mid none 25 baseline,5.0,mid,25,baseline,0.575,0.768,0.624,0.575,89.536,226.986,2750
+lcl-mid-none-r26-1109_0811,retune A lcl mid none 26 ours,5.0,mid,26,ours,0.575,0.772,0.624,0.575,103.715,326.765,4463
+lcl-mid-none-r26-1109_0816,retune A lcl mid none 26 baseline,5.0,mid,26,baseline,0.575,0.772,0.624,0.575,106.376,329.376,4461
+lcl-mid-none-r27-1109_0843,retune A lcl mid none 27 ours,5.0,mid,27,ours,0.575,0.772,0.624,0.575,88.08,311.28,4465
+lcl-mid-none-r27-1109_0848,retune A lcl mid none 27 baseline,5.0,mid,27,baseline,0.575,0.771,0.624,0.575,87.117,329.617,4852
+lcl-mid-none-r28-1109_0914,retune A lcl mid none 28 ours,5.0,mid,28,ours,0.575,0.772,0.624,0.575,109.188,337.888,4575
+lcl-mid-none-r28-1109_0919,retune A lcl mid none 28 baseline,5.0,mid,28,baseline,0.575,0.772,0.624,0.575,108.822,337.672,4578
+lcl-mid-none-r29-1109_0945,retune A lcl mid none 29 ours,5.0,mid,29,ours,0.575,0.771,0.624,0.575,79.613,314.263,4694
+lcl-mid-none-r29-1109_0950,retune A lcl mid none 29 baseline,5.0,mid,29,baseline,0.575,0.772,0.624,0.575,82.863,329.913,4942
+stock-lcl-10_2100-def-r40-1109_0010,ladder,10.0,10:2100,40,stock,0.449,0.697,0.499,0.449,83.077,324.027,4821
+stock-lcl-10_2100-def-r41-1109_0047,ladder,10.0,10:2100,41,stock,0.449,0.697,0.499,0.449,78.038,349.938,5440
+stock-lcl-10_2100-def-r42-1109_0125,ladder,10.0,10:2100,42,stock,0.9855,0.988,0.983,0.983,49.916,71.666,168
+stock-lcl-10_2100-def-r42-1109_0219,ladder,10.0,10:2100,42,stock,0.449,0.697,0.499,0.449,77.515,348.815,5428
+stock-lcl-10_2100-def-r43-1109_0158,ladder,10.0,10:2100,43,stock,0.449,0.697,0.499,0.449,78.12,334.97,5138
+stock-lcl-15_2750-def-r40-1108_2353,ladder,15.0,15:2750,40,stock,0.377,0.652,0.424,0.377,82.478,260.778,3568
+stock-lcl-15_2750-def-r41-1109_0035,ladder,15.0,15:2750,41,stock,0.9775,0.985,0.979,0.975,55.503,77.253,179
+stock-lcl-15_2750-def-r41-1109_0215,ladder,15.0,15:2750,41,stock,0.377,0.652,0.424,0.377,76.879,303.579,4536
+stock-lcl-15_2750-def-r42-1109_0109,ladder,15.0,15:2750,42,stock,0.377,0.652,0.424,0.377,77.975,343.075,5303
+stock-lcl-15_2750-def-r43-1109_0143,ladder,15.0,15:2750,43,stock,0.376,0.652,0.424,0.376,77.821,308.271,4611
+stock-lcl-1_1000-def-r40-1109_0017,ladder,1.0,1:1000,40,stock,0.865,0.93,0.889,0.865,88.422,326.822,4769
+stock-lcl-1_1000-def-r41-1109_0052,ladder,1.0,1:1000,41,stock,0.865,0.931,0.889,0.865,77.485,366.235,5777
+stock-lcl-1_1000-def-r42-1109_0127,ladder,1.0,1:1000,42,stock,0.864,0.931,0.888,0.864,77.586,319.036,4830
+stock-lcl-1_1000-def-r43-1109_0203,ladder,1.0,1:1000,43,stock,0.865,0.93,0.889,0.865,78.02,341.87,5279
+stock-lcl-25_4000-def-r40-1109_0029,ladder,25.0,25:4000,40,stock,0.285,0.593,0.326,0.285,84.539,341.49,5141
+stock-lcl-25_4000-def-r41-1109_0103,ladder,25.0,25:4000,41,stock,0.284,0.592,0.325,0.284,78.165,347.415,5386
+stock-lcl-25_4000-def-r42-1109_0137,ladder,25.0,25:4000,42,stock,0.285,0.593,0.325,0.285,78.661,340.161,5231
+stock-lcl-25_4000-def-r43-1109_0210,ladder,25.0,25:4000,43,stock,0.284,0.593,0.324,0.284,76.525,295.475,4381
+stock-lcl-2_1100-def-r40-1108_2359,ladder,2.0,2:1100,40,stock,0.739,0.864,0.778,0.739,87.235,279.785,3853
+stock-lcl-2_1100-def-r41-1109_0037,ladder,2.0,2:1100,41,stock,0.74,0.865,0.779,0.74,82.928,285.128,4046
+stock-lcl-2_1100-def-r42-1109_0114,ladder,2.0,2:1100,42,stock,0.74,0.865,0.778,0.74,77.467,348.367,5420
+stock-lcl-2_1100-def-r43-1109_0147,ladder,2.0,2:1100,43,stock,0.74,0.865,0.778,0.74,77.892,278.242,4009
+stock-lcl-40_5900-def-r40-1109_0004,ladder,40.0,40:5900,40,stock,0.2,0.538,0.236,0.2,87.017,338.467,5031
+stock-lcl-40_5900-def-r41-1109_0042,ladder,40.0,40:5900,41,stock,0.2,0.538,0.235,0.2,77.59,343.09,5312
+stock-lcl-40_5900-def-r42-1109_0120,ladder,40.0,40:5900,42,stock,0.2,0.539,0.235,0.2,78.027,348.427,5409
+stock-lcl-40_5900-def-r43-1109_0152,ladder,40.0,40:5900,43,stock,0.199,0.538,0.234,0.199,77.607,352.907,5508
+stock-lcl-5_1500-def-r40-1109_0023,ladder,5.0,5:1500,40,stock,0.575,0.772,0.624,0.575,82.964,292.914,4201
+stock-lcl-5_1500-def-r41-1109_0058,ladder,5.0,5:1500,41,stock,0.574,0.771,0.624,0.574,77.485,321.835,4888
+stock-lcl-5_1500-def-r42-1109_0132,ladder,5.0,5:1500,42,stock,0.574,0.771,0.623,0.574,78.097,362.747,5695
+stock-lcl-5_1500-def-r43-1109_0208,ladder,5.0,5:1500,43,stock,0.98,0.988,0.983,0.979,49.902,71.652,164
+stock-lcl-5_1500-def-r43-1109_0225,ladder,5.0,5:1500,43,stock,0.574,0.772,0.623,0.574,77.707,309.607,4640

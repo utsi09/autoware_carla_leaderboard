@@ -1,0 +1,13 @@
+# lcl severity cfg PROVISIONAL (2026-11-09; Goodin alpha=0.01 R^0.6 inverted). ladder runs only — calibrate overwrites lcl_sev_cfg.txt
+a 7.675284
+b 1.666667
+c 0.000000
+eps_a 0.000100
+beta 0.414187
+r_heavy 7.600000
+q_min 0.050000
+q_max 0.950000
+ema 0.100000
+f_floor 0.010000
+eps_f 0.010000
+eps_n 0.001000
