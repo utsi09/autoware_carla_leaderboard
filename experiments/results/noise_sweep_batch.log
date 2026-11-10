@@ -711,3 +711,65 @@ KeyboardInterrupt
 [runner] result: HAZARD_STOPPED (245.7s)
 [live] | 0 | lso | 0.6:90 | 9 | HAZARD_STOPPED | 245.7 | 0.99 | 0.87 | 65.1 | 1.82 | 0.96 | 0.96 | 0.05 | 0.06 | 3.07 | 20.0 | 1.00 | 188 | 4334 | def | 75.2 | 300.6 | 66.6 | 7.7 |
 2026-11-10 06:15:58 chain: ladder fill B done (154/147)
+2026-11-10 22:39:05 chain: cn fill σ15/σ7 start (20 cells)
+2026-11-10 22:39:05 fill cn 15 rep=0 free=27G
+[runner] result: HAZARD_STOPPED (188.5s)
+[live] | 0 | cn | 15 | 0 | HAZARD_STOPPED | 188.5 | 1.00 | 0.89 | 60.1 | 0.26 | 0.97 | 0.68 | 0.04 | 0.08 | 2.97 | 20.0 | 1.00 | 324 | 2681 | def | 10.0 | 39.3 | 54.3 | 3.6 |
+2026-11-10 22:42:39 fill cn 15 rep=1 free=27G
+[runner] result: HAZARD_STOPPED (191.9s)
+[live] | 0 | cn | 15 | 1 | HAZARD_STOPPED | 191.9 | 1.00 | 0.96 | 66.2 | 0.28 | 0.97 | 0.68 | 0.06 | 0.07 | 2.95 | 20.0 | 1.00 | 2380 | 2627 | def | 9.2 | 38.5 | 54.3 | 3.5 |
+2026-11-10 22:46:18 fill cn 15 rep=2 free=26G
+[runner] result: HAZARD_STOPPED (193.0s)
+[live] | 0 | cn | 15 | 2 | HAZARD_STOPPED | 193.0 | 1.00 | 0.94 | 70.2 | 0.40 | 0.97 | 0.67 | 0.05 | 0.08 | 2.94 | 20.0 | 1.00 | 828 | 2649 | def | 10.6 | 39.1 | 54.3 | 3.4 |
+2026-11-10 22:49:59 fill cn 15 rep=3 free=26G
+[runner] result: HAZARD_STOPPED (191.9s)
+[live] | 0 | cn | 15 | 3 | HAZARD_STOPPED | 191.9 | 1.00 | 0.76 | 59.1 | 0.29 | 0.97 | 0.67 | 0.05 | 0.10 | 2.97 | 20.0 | 1.00 | 254 | 2764 | def | 9.7 | 38.9 | 54.3 | 3.4 |
+2026-11-10 22:53:36 fill cn 15 rep=4 free=26G
+[runner] result: HAZARD_STOPPED (192.0s)
+[live] | 0 | cn | 15 | 4 | HAZARD_STOPPED | 192.0 | 1.00 | 0.85 | 59.2 | 0.32 | 0.97 | 0.68 | 0.04 | 0.07 | 2.98 | 20.0 | 1.00 | 255 | 2602 | def | 10.0 | 39.4 | 54.3 | 3.4 |
+2026-11-10 22:57:13 fill cn 15 rep=5 free=26G
+[runner] result: HAZARD_STOPPED (191.9s)
+[live] | 0 | cn | 15 | 5 | HAZARD_STOPPED | 191.9 | 0.99 | 1.00 | 0.0 | 0.25 | 0.97 | 0.67 | 0.04 | 0.08 | 2.98 | 20.0 | 1.00 | 153 | 2748 | def | 10.0 | 39.3 | 54.3 | 7.4 |
+2026-11-10 23:00:49 fill cn 15 rep=6 free=26G
+[runner] result: HAZARD_STOPPED (192.1s)
+[live] | 0 | cn | 15 | 6 | HAZARD_STOPPED | 192.1 | 0.99 | 0.93 | 63.2 | 0.41 | 0.97 | 0.68 | 0.04 | 0.09 | 2.96 | 20.0 | 1.00 | 323 | 2759 | def | 10.2 | 38.9 | 54.3 | 3.4 |
+2026-11-10 23:04:27 fill cn 15 rep=7 free=26G
+[runner] result: HAZARD_STOPPED (191.9s)
+[live] | 0 | cn | 15 | 7 | HAZARD_STOPPED | 191.9 | 1.00 | 0.95 | 63.6 | 0.32 | 0.97 | 0.67 | 0.05 | 0.08 | 2.99 | 20.0 | 1.00 | 480 | 2736 | def | 10.2 | 39.4 | 54.3 | 3.5 |
+2026-11-10 23:08:04 fill cn 15 rep=8 free=26G
+[runner] result: HAZARD_STOPPED (192.1s)
+[live] | 0 | cn | 15 | 8 | HAZARD_STOPPED | 192.1 | 1.00 | 0.86 | 61.9 | 0.32 | 0.97 | 0.67 | 0.04 | 0.08 | 2.97 | 20.0 | 1.00 | 253 | 2650 | def | 9.8 | 38.5 | 54.3 | 3.4 |
+2026-11-10 23:11:42 fill cn 15 rep=9 free=26G
+[runner] result: HAZARD_STOPPED (192.0s)
+[live] | 0 | cn | 15 | 9 | HAZARD_STOPPED | 192.0 | 0.99 | 0.86 | 68.9 | 0.48 | 0.97 | 0.68 | 0.05 | 0.09 | 2.96 | 20.0 | 1.00 | 297 | 2587 | def | 9.7 | 39.1 | 54.3 | 3.4 |
+2026-11-10 23:15:20 fill cn 7 rep=0 free=26G
+[runner] result: HAZARD_STOPPED (271.3s)
+[live] | 0 | cn | 7 | 0 | HAZARD_STOPPED | 271.3 | 1.00 | 0.87 | 61.8 | 1.68 | 0.96 | 0.77 | 0.05 | 0.06 | 3.08 | 20.0 | 1.00 | 671 | 4667 | def | 89.2 | 300.5 | 66.6 | 2.5 |
+2026-11-10 23:20:19 fill cn 7 rep=1 free=26G
+[runner] result: HAZARD_STOPPED (253.0s)
+[live] | 0 | cn | 7 | 1 | HAZARD_STOPPED | 253.0 | 0.99 | 1.00 | 68.4 | 1.87 | 0.96 | 0.76 | 0.05 | 0.06 | 3.09 | 20.0 | 1.00 | 167 | 4348 | def | 70.6 | 300.5 | 66.6 |  |
+2026-11-10 23:24:56 fill cn 7 rep=2 free=26G
+[runner] result: HAZARD_STOPPED (262.1s)
+[live] | 0 | cn | 7 | 2 | HAZARD_STOPPED | 262.1 | 0.96 | 0.94 | 66.7 | 2.08 | 0.96 | 0.77 | 0.05 | 0.07 | 3.11 | 20.0 | 1.00 | 492 | 3978 | def | 79.3 | 302.1 | 66.6 | 2.9 |
+2026-11-10 23:29:44 fill cn 7 rep=3 free=26G
+[runner] result: HAZARD_STOPPED (256.2s)
+[live] | 0 | cn | 7 | 3 | HAZARD_STOPPED | 256.2 | 1.00 | 0.90 | 57.3 | 1.78 | 0.96 | 0.77 | 0.05 | 0.06 | 3.08 | 20.0 | 1.00 | 184 | 4613 | def | 73.9 | 300.6 | 66.6 | 8.2 |
+2026-11-10 23:34:26 fill cn 7 rep=4 free=26G
+[runner] result: HAZARD_STOPPED (273.3s)
+[live] | 0 | cn | 7 | 4 | HAZARD_STOPPED | 273.3 | 0.96 | 0.84 | 64.9 | 1.78 | 0.96 | 0.78 | 0.04 | 0.05 | 3.05 | 20.0 | 1.00 | 1028 | 4494 | def | 90.6 | 300.5 | 66.6 | 4.0 |
+2026-11-10 23:39:27 fill cn 7 rep=5 free=26G
+[runner] result: HAZARD_STOPPED (254.0s)
+[live] | 0 | cn | 7 | 5 | HAZARD_STOPPED | 254.0 | 0.95 | 0.76 | 59.2 | 1.87 | 0.96 | 0.76 | 0.05 | 0.05 | 3.07 | 20.0 | 1.00 | 324 | 4417 | def | 71.9 | 299.2 | 66.6 | 8.1 |
+2026-11-10 23:44:06 fill cn 7 rep=6 free=25G
+[runner] result: HAZARD_STOPPED (329.4s)
+[live] | 0 | cn | 7 | 6 | HAZARD_STOPPED | 329.4 | 1.00 | 0.84 | 70.1 | 0.19 | 0.98 | 0.78 | 0.06 | 0.09 | 2.96 | 20.0 | 1.00 | 2403 | 6133 | def | 147.2 | 39.7 | 54.3 | 3.4 |
+2026-11-10 23:50:06 fill cn 7 rep=7 free=27G
+[runner] result: HAZARD_STOPPED (255.1s)
+[live] | 0 | cn | 7 | 7 | HAZARD_STOPPED | 255.1 | 1.00 | 0.91 | 58.6 | 1.77 | 0.96 | 0.77 | 0.05 | 0.06 | 3.09 | 20.0 | 1.00 | 184 | 4129 | def | 73.0 | 300.6 | 66.6 | 8.3 |
+2026-11-10 23:54:47 fill cn 7 rep=8 free=27G
+[runner] result: HAZARD_STOPPED (282.5s)
+[live] | 0 | cn | 7 | 8 | HAZARD_STOPPED | 282.5 | 1.00 | 0.96 | 67.6 | 0.24 | 0.98 | 0.79 | 0.04 | 0.07 | 2.98 | 20.0 | 1.00 | 403 | 5036 | def | 100.6 | 40.6 | 54.3 | 3.4 |
+2026-11-10 23:59:59 fill cn 7 rep=9 free=27G
+[runner] result: HAZARD_STOPPED (257.1s)
+[live] | 0 | cn | 7 | 9 | HAZARD_STOPPED | 257.1 | 0.99 | 0.81 | 56.1 | 1.62 | 0.96 | 0.77 | 0.06 | 0.07 | 3.09 | 20.0 | 1.00 | 416 | 4207 | def | 74.6 | 301.0 | 66.6 | 8.0 |
+2026-11-11 00:04:41 chain: cn fill σ15/σ7 runs done (20/20) — post-processing
