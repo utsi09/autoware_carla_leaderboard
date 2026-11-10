@@ -41,7 +41,7 @@ for d, name in DETS:
     k, n = kn(d); print(f"{name:34s} det {k}/{n}  med lat {st.median(lat[d]) if lat[d] else float('nan'):5.1f} s  fam " + " ".join("n/a " if r is None else f"{r:.2f}" for r, _, _ in stats[d]))
 
 fig = plt.figure(figsize=(12.6, 8.6))
-gs = GridSpec(3, 5, figure=fig, width_ratios=[1, 1, 1, 0.12, 1.45], height_ratios=[1, 1, 1], wspace=0.1, hspace=0.78, left=0.03, right=0.9, top=0.875, bottom=0.115)
+gs = GridSpec(3, 5, figure=fig, width_ratios=[1, 1, 1, 0.12, 1.45], height_ratios=[1, 1, 1], wspace=0.1, hspace=0.78, left=0.03, right=0.9, top=0.875, bottom=0.075)
 N = len(FAMILIES); ang = np.array([2 * np.pi * i / N for i in range(N)]); W = 2 * np.pi / N
 ours_r = [r if r is not None else 0 for r, _, _ in stats["ours"]]
 for i, (d, name) in enumerate(DETS):
@@ -61,11 +61,13 @@ for i, (d, name) in enumerate(DETS):
         ax.scatter(a, v, s=14, color=COLOR[d], edgecolors="black", linewidths=0.4, zorder=4)
     ax.set_title(name.replace(" (", "\n("), fontsize=8.6, pad=6, fontweight="bold" if d == "ours" else "normal")
     for lab in ax.get_xticklabels(): lab.set_y(lab.get_position()[1] - 0.06)
-fig.text(0.03, 0.962, "(a) Detection rate by fault family", fontsize=10.5, ha="left")
+fig.text(0.03, 0.955, "(a) Detection rate by fault family", fontsize=10.5, ha="left")
 fig.legend(handles=[Patch(facecolor="#f0f0f0", edgecolor="#b0b0b0", hatch="////", label="not applicable: sensor not consumed / not evaluated"),
                     Line2D([], [], color="#888888", ls="--", lw=0.9, label="proposed (reference outline)"),
-                    Line2D([], [], marker="o", color="#555", lw=0, ms=4, mec="black", label="evaluated family: detection rate (0 = evaluated, missed)")],
-           loc="upper left", bbox_to_anchor=(0.2, 0.985), ncol=3, fontsize=7.8, frameon=True, edgecolor="black", handlelength=1.8, columnspacing=1.4)
+                    Line2D([], [], marker="o", color="#555", lw=0, ms=4, mec="black", label="evaluated family: detection rate (0 = evaluated, missed)"),
+                    Patch(facecolor="#bbbbbb", alpha=0.6, edgecolor="black", label="(b) box: median and interquartile range of detected cases"),
+                    Line2D([], [], marker="D", color="#bbbbbb", lw=0, ms=5, mec="black", label="(b) fewer than 5 detections: individual cases")],
+           loc="upper left", bbox_to_anchor=(0.2, 0.995), ncol=3, fontsize=7.6, frameon=True, edgecolor="black", handlelength=1.8, columnspacing=1.2, labelspacing=0.35)
 # (b) latency
 axb = fig.add_subplot(gs[:, 4])
 order = [d for d, _ in DETS][::-1]; pos = list(range(1, len(order) + 1))
@@ -79,13 +81,11 @@ for yi, d in zip(pos, order):
     if len(lat[d]) >= 5: axb.scatter(lat[d], yi + rng.uniform(-0.16, 0.16, len(lat[d])), s=3.5, color=COLOR[d], alpha=0.28, linewidths=0, zorder=2)
     else: axb.scatter(lat[d], [yi] * len(lat[d]), s=34, marker="D", color=COLOR[d], edgecolors="black", linewidths=0.6, zorder=4)
 for yi, d in zip(pos, order):
-    k, n = kn(d); axb.text(1.01, yi, f"n = {k}/{n}", transform=axb.get_yaxis_transform(), fontsize=7.6, va="center", ha="left", color="#333")
+    k, n = kn(d); axb.text(1.015, yi, f"{k} / {n}", transform=axb.get_yaxis_transform(), fontsize=7.8, va="center", ha="left", color="#333")
+axb.text(1.015, 1.0, "detected /\nevaluated", transform=axb.transAxes, fontsize=7.4, va="bottom", ha="left", color="#333")
 axb.set_xscale("log"); axb.set_xlim(0.3, 300); axb.set_ylim(0.4, len(order) + 0.6); axb.set_yticks(pos); axb.set_yticklabels([SHORT[d] for d in order], fontsize=8.5)
 axb.get_yticklabels()[order.index("ours")].set_fontweight("bold")
-axb.set_xlabel("Detection latency after injection (s, simulation time, log)", fontsize=9); axb.tick_params(axis="both", which="both", length=3)
-axb.set_title("(b) Detection latency (detected cases; box = median and IQR,\n      diamonds = fewer than 5 detections; n = detected / evaluated cases)", loc="left", fontsize=9.6, pad=8)
-fig.text(0.03, 0.012, "Conditions: 18 capability-reducing faults (LiDAR sparsification mid excluded for all detectors: no capability loss, no intervention by design). Per-condition counts: 19×9 matrix table.\n"
-         "False alarms — navigation evaluation (26 no-fault runs + 597 pre-injection windows): Proposed 1, Autoware diag. 1 (same run), Yu 0, Huang & Su 0.  LiDAR/camera evaluation (3 no-fault runs + 30 windows): 0 for all.\n"
-         "Alibi (nf-calibrated threshold): alarms in 3 of 8 no-fault run×sensor evaluations.  RADAS: 0 of 5 pre-injection windows.", fontsize=7.4, color="#333", va="bottom", linespacing=1.5)
+axb.set_xlabel("Latency (s, simulation time, log scale)", fontsize=9); axb.tick_params(axis="both", which="both", length=3)
+axb.set_title("(b) Detection latency after injection", loc="left", fontsize=10.5, pad=8)
 for ext in ("png", "pdf"): fig.savefig(f"{RES}/figs/fig_detector_compare.{ext}", dpi=200, facecolor="white")
 print("saved", f"{RES}/figs/fig_detector_compare.png")

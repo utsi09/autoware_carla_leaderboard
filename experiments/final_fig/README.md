@@ -19,6 +19,12 @@
 | F8 | `fig_encounter.png` | 조우 블록: 제동·정지시간·차체 간격·보행자 접촉(고장 × 팔) | 조우 실험 | `analysis/fig_encounter.py` | 이전 커밋에 설명 |
 | V1 | `video/demo_final_cn_imn_4x_small.mp4` | **본심 데모 영상** 1:28, 4배속, 좌 Proposed / 우 Baseline(stock). ① 카메라 잡음 high 같은 시드 r13: 제안 교차로 앞 갓길 대피, 순정 빨간불 무한 대기 ② IMU 자이로 잡음 mid r2: 제안 자기 차로 비상정지, 순정 차선에 굳음. 먼저 끝난 쪽은 회색 정지화면 | 원본 67 MB는 PC `results/videos/demo_final_cn_imn_4x.mp4` | `experiments/case_video.sh`, `stock_case_video.sh`, 합성 `scratchpad/vid/compose_demo3.sh`(PC) | ⚠ 카메라 구간 제안 쪽은 **데모 전용 런타임 파라미터 완화**(`tl_visible_min_score` 0.5→0, `tl_wait_s` 15→0). 논문 수치에는 미사용. 질문 시 "시연을 위해 신호등 배제 규칙만 풀었다" |
 
+**F5b 캡션(그림 안 각주 없음 → 캡션에 넣을 문장)**
+
+EN: *Detector comparison on 18 capability-reducing fault conditions (LiDAR sparsification mid is excluded for all detectors: it causes no capability loss, so no intervention is intended). (a) Detection rate per fault family. Hatched sectors mark families that the detector does not consume or was not evaluated on; a point at 0 means the family was evaluated and missed; the grey dashed outline is the proposed monitor. (b) Latency from injection to detection for detected cases (simulation time). Boxes show the median and interquartile range; diamonds show individual cases where fewer than five detections exist; the right-hand column lists detected / evaluated cases. Per-condition counts are given in Table X. False alarms: navigation evaluation (26 no-fault runs and 597 pre-injection windows) proposed 1, Autoware diagnostics 1 (same run), Yu 0, Huang & Su 0; LiDAR/camera evaluation (3 no-fault runs, 30 windows) 0 for all; Alibi (no-fault-calibrated threshold) alarms in 3 of 8 no-fault run–sensor evaluations; RADAS 0 of 5 pre-injection windows.*
+
+KO: *능력 손실을 일으키는 18개 고장 조건에서의 검출기 비교(라이다 성김 mid는 능력 손실이 없어 개입 대상이 아니므로 모든 검출기에서 제외). (a) 고장 계열별 검출률. 빗금 부채꼴은 그 검출기가 해당 센서를 다루지 않거나 평가하지 않은 계열, 0에 찍힌 점은 평가했으나 놓친 계열, 회색 점선은 제안 감시기. (b) 주입부터 검출까지의 지연(검출된 케이스, 시뮬레이션 시간). 상자는 중앙값과 사분위 범위, 마름모는 검출이 5건 미만인 검출기의 개별 케이스, 오른쪽 열은 검출/평가 케이스 수. 조건별 건수는 표 X. 오탐: 항법 평가(무고장 26런·주입 전 창 597) 제안 1, Autoware 진단 1(같은 런), Yu 0, Huang&Su 0; 라이다/카메라 평가(무고장 3런·창 30) 전부 0; Alibi(무고장 보정 문턱) 무고장 런×센서 8회 중 3회 경보; RADAS 주입 전 구간 5회 중 0.*
+
 폐기/대체된 그림(참고만): `results/figs/fig_lcl_graded*.png`(폐루프 등급 그림, 사용자 지시로 제외), `fig_outcomes_with_stock.png`·`fig_outcomes_stock_panel.png`(F4로 대체), `fig_noise_sweep.png`(F1 이전 판, lcl 열이 구 모델).
 
 ## 2. 보고서 (`reports/`)
