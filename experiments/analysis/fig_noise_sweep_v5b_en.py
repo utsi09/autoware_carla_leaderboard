@@ -155,7 +155,7 @@ for j, (fault, title, skey, slabel, xlabel) in enumerate(COL):
         bot.tick_params(axis="x", labelsize=7.5)
     if fault == "cn":
         lv = sorted({r["x"] for r in rows if r["fault"] == "cn"})
-        top.set_xlim(0, 50); bot.xaxis.set_major_locator(FixedLocator(lv)); bot.xaxis.set_major_formatter(FixedFormatter([f"{v:g}" for v in lv])); bot.xaxis.set_minor_locator(NullLocator())
+        top.set_xlim(0, 50); bot.xaxis.set_major_locator(FixedLocator(lv)); bot.xaxis.set_major_formatter(FixedFormatter([f"{v:g}" for v in lv])); bot.xaxis.set_minor_locator(NullLocator()); bot.tick_params(axis="x", labelsize=7.5)
     if fault == "imn":
         top.set_xscale("log"); top.set_xlim(0.04, 1.9)
         lv = sorted({r["x"] for r in rows if r["fault"] == "imn"})

@@ -1,4 +1,4 @@
-# final_fig — 최종 논문 반영용 그림·표·데이터 (2026-11-10 22:40 기준)
+# final_fig — 최종 논문 반영용 그림·표·데이터 (2026-11-11 00:10 기준)
 
 다른 세션/다른 작업자가 **이 폴더와 `experiments/analysis/`만 보고** 논문 결과장을 쓸 수 있도록 정리했다.
 원자료(bag·GT·live csv, 56 GB)는 이 PC `experiments/results/`에만 있고 깃허브에는 **파생표·그림·보고서만** 올라간다.
@@ -8,7 +8,7 @@
 
 | # | 파일 | 내용 | 자료·표본 | 생성 스크립트 | 비고 |
 |---|---|---|---|---|---|
-| F1 | `fig_noise_sweep_v5b_en.{png,pdf}` | **고장 세기 ↔ 감시 점수 ↔ 실제 성능** 4열: (a) LiDAR 성김 T, (b) LiDAR 강우 감쇠 R(동등 시정 m), (c) IMU 자이로 잡음 σ, (d) 카메라 가우시안 잡음 σ. 위 행 = 감시기 점수 중앙값, 아래 행 = Autoware 인식 재현율(0–26/26–50 m)·EKF 오차·신호등 인식 성공률 | 순정(감시기만, MRM off) 세기 사다리. 채우기 B 완료 후 **수준당 10런**(lso 7수준, lcl 7수준 rep 40–49, imn 4수준, cn 4수준) + 캠페인 운영점(mid/high, 1런 = 흰 마커) | `analysis/fig_noise_sweep_v5b_en.py` (국문판 `fig_noise_sweep_v5b.py`) | 핵심 기여 그림. (d) 아래 행 = 런 단위 "초록 신호에 출발 성공" 비율(`stock_outcomes.csv` missed_green==0), **def 교통·t=10 주입 사다리 런만**(캠페인 mid/high 는 27 s 주입·교통 3종이라 섞지 않음). σ 5/10/20/30/45 각 10런 → 0.9/0.3/0.0/0.0/0.0; **σ 15·7 각 10런 추가 중**(`cn_fill_15_7.sh`, 11/11 새벽 자동 재생성·푸시) |
+| F1 | `fig_noise_sweep_v5b_en.{png,pdf}` | **고장 세기 ↔ 감시 점수 ↔ 실제 성능** 4열: (a) LiDAR 성김 T, (b) LiDAR 강우 감쇠 R(동등 시정 m), (c) IMU 자이로 잡음 σ, (d) 카메라 가우시안 잡음 σ. 위 행 = 감시기 점수 중앙값, 아래 행 = Autoware 인식 재현율(0–26/26–50 m)·EKF 오차·신호등 인식 성공률 | 순정(감시기만, MRM off) 세기 사다리. 채우기 B 완료 후 **수준당 10런**(lso 7수준, lcl 7수준 rep 40–49, imn 4수준, cn 4수준) + 캠페인 운영점(mid/high, 1런 = 흰 마커) | `analysis/fig_noise_sweep_v5b_en.py` (국문판 `fig_noise_sweep_v5b.py`) | 핵심 기여 그림. (d) 아래 행 = 런 단위 "초록 신호에 출발 성공" 비율(`stock_outcomes.csv` missed_green==0), **def 교통·t=10 주입 사다리 런만**(캠페인 mid/high 는 27 s 주입·교통 3종이라 섞지 않음). σ 5/7/10/15/20/30/45 각 10런(σ 15·7 은 11/11 00:05 완료) → 0.9/0.8/0.3/0.0/0.0/0.0/0.0 단조 감소 |
 | F2 | `fig_noise_sweep_rest_sensor.{png,pdf}` | F1과 같은 형식, 나머지 센서 고장(라이다/카메라 사망, 클러터 mid/high 등) | 11월 순정 매트릭스 수준당 ≈45런 | `analysis/fig_noise_sweep_rest.py` | 보조 |
 | F3 | `fig_noise_sweep_rest_nav.{png,pdf}` | F1과 같은 형식, 항법 고장(GNSS 위치 잡음·상관 바이어스·단절, IMU 바이어스·램프) | 동일 | 동일 | 보조 |
 | F4 | `fig_outcomes_3panel.{png,pdf}` | **대응 결과 분포** (a)(b) 논문 본 실험(제안: 계속 주행/대피/정지), (c) 순정 Autoware(정지·정체·충돌; 빗금 = 순정에만 있는 범주) | 조건당 45런 짝 맞춤 (교통 3종 × rep 0–14) | `analysis/fig_outcomes_3panel.py` | 행 값은 사용자 확정(아래 4절 ③) |
@@ -70,5 +70,5 @@ PC 원자료: `experiments/results/live/<tag>.csv`(런당 감시기 요약), `re
 ## 6. 남은 일(2026-11-10 22:40)
 
 - [x] 채우기 B 신규 런 반영(cam_scores·stock_outcomes 갱신, lcl glob r4[0-9]) → F1 수준당 10런(11/10 23:30).
-- [ ] cn σ15·σ7 각 10런(`cn_fill_15_7.sh`, 약 2 h) → F1 자동 재생성·푸시. 끝나면 (d) 아래 행이 5/7/10/15/20/30/45 7점.
+- [x] cn σ15·σ7 각 10런 완료(11/11 00:05, `cn_fill_15_7.sh`) → F1 (d) 아래 행 7점, 단조 감소.
 - [ ] 선택: 단계당 15런(C안, +110런 ≈ 9 h)은 사용자 결정 대기.
