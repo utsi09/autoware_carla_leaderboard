@@ -3,3 +3,7 @@ __pycache__/
 *.png
 *.csv
 *.pdf
+
+# final_fig: 최종 그림·표는 항상 추적 (상위 *.png/*.pdf 규칙 예외)
+!final_fig/
+!final_fig/**

@@ -1,0 +1,13 @@
+# lcl severity cfg v5b (calibrated 2026-11-09_14:34:48; see calib_report.md)
+a 7.657330
+b 1.662733
+c 0.000000
+eps_a 0.000100
+beta 0.414187
+r_heavy 7.600000
+q_min 0.050000
+q_max 0.950000
+ema 0.100000
+f_floor 0.010000
+eps_f 0.010000
+eps_n 0.001000
